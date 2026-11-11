@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using UserManagement.Web.Exceptions;
 using UserManagement.Web.Repositories;
@@ -11,7 +11,7 @@ namespace UserManagement.Tests
     public class UserServiceTests
     {
         [TestMethod]
-        public void Search_ValidPage()
+        public void Search_ValidPage_ReturnsCleanFilters()
         {
             UserSearchViewModel model = new UserSearchViewModel
             {
@@ -32,7 +32,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Search_NullModel()
+        public void Search_NullModel_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             UserService service = new UserService(repository.Object);
@@ -44,7 +44,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Search_PageTooLarge()
+        public void Search_PageTooLarge_ReturnsLastPage()
         {
             UserSearchViewModel model = new UserSearchViewModel { Page = 3 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -62,7 +62,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Search_NoUsers()
+        public void Search_NoUsers_ReturnsFirstPage()
         {
             UserSearchViewModel model = new UserSearchViewModel { Page = 2 };
             UserListViewModel emptyPage = new UserListViewModel { PageSize = 10 };
@@ -77,7 +77,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Update_ValidData()
+        public void Update_ValidData_NormalizesInput()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
@@ -99,7 +99,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Update_DisableSelf()
+        public void Update_DisableSelf_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
@@ -107,14 +107,16 @@ namespace UserManagement.Tests
             UserService service = new UserService(repository.Object);
             UserEditViewModel model = new UserEditViewModel { UserId = 2, IsActive = false };
 
-            ValidationException error = Assert.ThrowsException<ValidationException>(
+            BadRequestException error = Assert.ThrowsException<BadRequestException>(
                 () => service.Update(model, "USER01"));
 
-            Assert.IsTrue(error.Errors.ContainsKey("IsActive"));
+            Assert.AreEqual(400, error.HttpStatusCode);
+            Assert.AreEqual(UserManagement.Web.Constants.ErrorMessages.CannotDeactivateOwnAccount, error.UserMessage);
+            Assert.AreEqual(UserManagement.Web.Constants.ErrorCode.CannotDeactivateOwnAccount, error.ErrorCode);
         }
 
         [TestMethod]
-        public void GetDetails_InvalidId()
+        public void GetDetails_InvalidId_ThrowsNotFound()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             UserService service = new UserService(repository.Object);
@@ -125,7 +127,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void GetDetails_UserNotFound()
+        public void GetDetails_UserNotFound_ThrowsNotFound()
         {
             int userId = 99;
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -140,7 +142,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void GetEdit_ValidId()
+        public void GetEdit_ExistingUser_ReturnsEditModel()
         {
             UserDetailsViewModel user = new UserDetailsViewModel
             {
@@ -162,7 +164,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Update_NullModel()
+        public void Update_NullModel_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             UserService service = new UserService(repository.Object);
@@ -174,7 +176,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Update_UserNotFound()
+        public void Update_UserNotFound_ThrowsNotFound()
         {
             UserEditViewModel model = new UserEditViewModel { UserId = 99 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -188,7 +190,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Update_DisableOtherUser()
+        public void Update_DisableOtherUser_Succeeds()
         {
             UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
             UserEditViewModel model = new UserEditViewModel { UserId = user.UserId, IsActive = false };
@@ -201,7 +203,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Update_SaveFailed()
+        public void Update_SaveFailed_ThrowsNotFound()
         {
             UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
             UserEditViewModel model = new UserEditViewModel { UserId = user.UserId, IsActive = true };

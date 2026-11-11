@@ -1,24 +1,21 @@
-using System.Linq;
-using System.Configuration;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using Dapper;
 using UserManagement.Web.Models;
+using UserManagement.Web.Util;
 using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly string _connectionString = ConfigurationManager
-            .ConnectionStrings["UserManagementDb"].ConnectionString;
-
         public AppUser GetByUsername(string username)
         {
             string procedureName = "dbo.usp_AppUser_GetByUsername";
             DynamicParameters parameters = new DynamicParameters(new { Username = username });
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
                 connection.Open();
 
@@ -38,28 +35,16 @@ namespace UserManagement.Web.Repositories
             long pageNumber = model.Page;
             long offset = (pageNumber - 1) * pageSize;
 
-            string username = model.Username;
-            if (username == null)
-            {
-                username = "";
-            }
-
-            string fullName = model.FullName;
-            if (fullName == null)
-            {
-                fullName = "";
-            }
-
             DynamicParameters parameters = new DynamicParameters(new
             {
-                Username = username,
-                FullName = fullName,
+                Username = model.Username ?? "",
+                FullName = model.FullName ?? "",
                 IsActive = model.IsActive,
                 Offset = offset,
                 PageSize = pageSize
             });
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
                 connection.Open();
 
@@ -84,7 +69,7 @@ namespace UserManagement.Web.Repositories
             string procedureName = "dbo.usp_AppUser_GetById";
             DynamicParameters parameters = new DynamicParameters(new { UserId = id });
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
                 connection.Open();
 
@@ -108,7 +93,7 @@ namespace UserManagement.Web.Repositories
                 IsActive = model.IsActive
             });
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
                 connection.Open();
 
@@ -117,12 +102,7 @@ namespace UserManagement.Web.Repositories
                     parameters,
                     commandType: CommandType.StoredProcedure);
 
-                if (rowsAffected == 1)
-                {
-                    return true;
-                }
-
-                return false;
+                return rowsAffected == 1;
             }
         }
 
@@ -139,7 +119,7 @@ namespace UserManagement.Web.Repositories
                 PasswordIterations = user.PasswordIterations
             });
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
                 connection.Open();
                 connection.Execute(
@@ -158,7 +138,7 @@ namespace UserManagement.Web.Repositories
                 PasswordIterations = iterations
             });
 
-            using (SqlConnection connection = new SqlConnection(_connectionString))
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
                 connection.Open();
                 int rowsAffected = connection.ExecuteScalar<int>(

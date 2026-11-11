@@ -23,12 +23,9 @@ namespace UserManagement.Web.ViewModels
                     return 0;
                 }
 
-                int totalPages = TotalCount / PageSize;
-
-                if (TotalCount % PageSize > 0)
-                {
-                    totalPages++;
-                }
+                int fullPages = TotalCount / PageSize;
+                int extraPage = TotalCount % PageSize > 0 ? 1 : 0;
+                int totalPages = fullPages + extraPage;
 
                 return totalPages;
             }

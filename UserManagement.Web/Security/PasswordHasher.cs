@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
+using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.Security
 {
@@ -11,7 +12,7 @@ namespace UserManagement.Web.Security
         {
             if (string.IsNullOrEmpty(password))
             {
-                throw new ArgumentException("Password cannot be empty.");
+                throw new ArgumentException(ErrorMessages.PasswordRequired);
             }
 
             byte[] salt = new byte[16];
@@ -31,9 +32,12 @@ namespace UserManagement.Web.Security
                 hash = pbkdf2.GetBytes(32);
             }
 
-            PasswordHashResult result = new PasswordHashResult();
-            result.Hash = hash;
-            result.Salt = salt;
+            PasswordHashResult result = new PasswordHashResult
+            {
+                Hash = hash,
+                Salt = salt
+            };
+
             return result;
         }
 
@@ -43,32 +47,7 @@ namespace UserManagement.Web.Security
             byte[] salt,
             int iterations)
         {
-            if (string.IsNullOrEmpty(password))
-            {
-                return false;
-            }
-
-            if (storedHash == null)
-            {
-                return false;
-            }
-
-            if (storedHash.Length != 32)
-            {
-                return false;
-            }
-
-            if (salt == null)
-            {
-                return false;
-            }
-
-            if (salt.Length != 16)
-            {
-                return false;
-            }
-
-            if (iterations < 100000)
+            if (string.IsNullOrEmpty(password) || storedHash == null || storedHash.Length != 32 || salt == null || salt.Length != 16 || iterations < 100000)
             {
                 return false;
             }
@@ -88,11 +67,8 @@ namespace UserManagement.Web.Security
 
             for (int i = 0; i < storedHash.Length; i++)
             {
-                // XOR gives 0 when the two bytes are equal.
-                int byteDifference = storedHash[i] ^ newHash[i];
-
                 // Keep any difference found; compare every byte before returning.
-                difference = difference | byteDifference;
+                difference |= storedHash[i] ^ newHash[i];
             }
 
             return difference == 0;

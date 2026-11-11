@@ -22,12 +22,7 @@ namespace UserManagement.Web.Filters
         public void OnAuthentication(AuthenticationContext filterContext)
         {
             IPrincipal principal = filterContext.Principal;
-            if (principal == null)
-            {
-                return;
-            }
-
-            if (!principal.Identity.IsAuthenticated)
+            if (principal == null || !principal.Identity.IsAuthenticated)
             {
                 return;
             }
@@ -39,7 +34,7 @@ namespace UserManagement.Web.Filters
             {
                 FormsAuthentication.SignOut();
                 GenericIdentity anonymousIdentity = new GenericIdentity("");
-                filterContext.Principal = new GenericPrincipal(anonymousIdentity, new string[0]);
+                filterContext.Principal = new GenericPrincipal(anonymousIdentity, Array.Empty<string>());
                 return;
             }
 
@@ -65,16 +60,9 @@ namespace UserManagement.Web.Filters
                 return;
             }
 
-            int statusCode = 401;
-            string errorCode = ErrorCode.AuthenticationRequired;
-            string message = ErrorMessages.AuthenticationRequired;
-
-            if (isAuthenticated)
-            {
-                statusCode = 403;
-                errorCode = ErrorCode.AccessDenied;
-                message = ErrorMessages.AccessDenied;
-            }
+            int statusCode = isAuthenticated ? 403 : 401;
+            string errorCode = isAuthenticated ? ErrorCode.AccessDenied : ErrorCode.AuthenticationRequired;
+            string message = isAuthenticated ? ErrorMessages.AccessDenied : ErrorMessages.AuthenticationRequired;
 
             filterContext.HttpContext.Response.StatusCode = statusCode;
             filterContext.HttpContext.Response.TrySkipIisCustomErrors = true;

@@ -2,6 +2,7 @@
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
 using UserManagement.Web.Repositories;
+using UserManagement.Web.Util;
 using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Services
@@ -22,8 +23,8 @@ namespace UserManagement.Web.Services
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
 
-            model.Username = CleanText(model.Username);
-            model.FullName = CleanText(model.FullName);
+            model.Username = StringUtil.CleanText(model.Username);
+            model.FullName = StringUtil.CleanText(model.FullName);
 
             int pageSize = 10;
             UserListViewModel result = _userRepository.Search(model, pageSize);
@@ -65,11 +66,14 @@ namespace UserManagement.Web.Services
         public UserEditViewModel GetEdit(int id)
         {
             UserDetailsViewModel user = GetDetails(id);
-            UserEditViewModel model = new UserEditViewModel();
-            model.UserId = user.UserId;
-            model.FullName = user.FullName;
-            model.Email = user.Email;
-            model.IsActive = user.IsActive;
+            UserEditViewModel model = new UserEditViewModel
+            {
+                UserId = user.UserId,
+                FullName = user.FullName,
+                Email = user.Email,
+                IsActive = user.IsActive
+            };
+
             return model;
         }
 
@@ -80,14 +84,14 @@ namespace UserManagement.Web.Services
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
 
-            model.FullName = CleanText(model.FullName);
-            model.Email = CleanText(model.Email);
+            model.FullName = StringUtil.CleanText(model.FullName);
+            model.Email = StringUtil.CleanText(model.Email);
             UserDetailsViewModel existing = GetDetails(model.UserId);
 
             bool isCurrentUser = string.Equals(existing.Username, currentUsername, StringComparison.OrdinalIgnoreCase);
             if (isCurrentUser && !model.IsActive)
             {
-                throw new ValidationException("IsActive", "Bạn không thể tự vô hiệu hoá tài khoản đang đăng nhập.");
+                throw new BadRequestException(ErrorCode.CannotDeactivateOwnAccount, ErrorMessages.CannotDeactivateOwnAccount);
             }
 
             bool updated = _userRepository.Update(model);
@@ -97,14 +101,5 @@ namespace UserManagement.Web.Services
             }
         }
 
-        private static string CleanText(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return null;
-            }
-
-            return value.Trim();
-        }
     }
 }

@@ -20,7 +20,7 @@ namespace UserManagement.Web.Filters
 
             Exception exception = filterContext.Exception;
             ApiException apiException = exception as ApiException;
-            ValidationException validationException = exception as ValidationException;
+            RequestValidationException validationException = exception as RequestValidationException;
             HttpException httpException = exception as HttpException;
 
             int statusCode = 500;

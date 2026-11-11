@@ -18,12 +18,11 @@ namespace UserManagement.Web.Controllers
 
         protected string GetLoginRedirectUrl(string returnUrl)
         {
-            if (Url.IsLocalUrl(returnUrl))
-            {
-                return Url.Content(returnUrl);
-            }
+            string redirectUrl = Url.IsLocalUrl(returnUrl)
+                ? Url.Content(returnUrl)
+                : Url.Action("Index", "Home");
 
-            return Url.Action("Index", "Home");
+            return redirectUrl;
         }
     }
 }

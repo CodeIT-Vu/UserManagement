@@ -232,10 +232,12 @@
     <Compile Include="Constants\ErrorMessages.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Exceptions\ApiException.cs" />
-    <Compile Include="Exceptions\ValidationException.cs" />
+    <Compile Include="Exceptions\RequestValidationException.cs" />
     <Compile Include="Models\ApiErrorResponse.cs" />
     <Compile Include="Models\ApiSuccessResponse.cs" />
     <Compile Include="Util\HttpRequestUtil.cs" />
+    <Compile Include="Util\StringUtil.cs" />
+    <Compile Include="Util\DbConnectionFactory.cs" />
     <Compile Include="Repositories\Interfaces\IUserRepository.cs" />
     <Compile Include="Services\Interfaces\IAuthService.cs" />
   </ItemGroup>

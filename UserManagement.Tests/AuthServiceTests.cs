@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
@@ -13,7 +14,7 @@ namespace UserManagement.Tests
     public class AuthServiceTests
     {
         [TestMethod]
-        public void Authenticate_ValidLogin()
+        public void Authenticate_ValidCredentials_ReturnsUser()
         {
             AppUser user = CreateActiveUser("Password123!");
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -33,7 +34,7 @@ namespace UserManagement.Tests
         [DataTestMethod]
         [DataRow("  user01@example.com  ", "user01@example.com")]
         [DataRow("   ", null)]
-        public void Register_NormalizesInput(string email, string expectedEmail)
+        public void Register_WhitespaceInput_NormalizesInput(string email, string expectedEmail)
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             AuthService service = new AuthService(repository.Object);
@@ -57,7 +58,7 @@ namespace UserManagement.Tests
         [DataRow(true, true)]
         [DataRow(true, false)]
         [DataRow(false, false)]
-        public void FindActiveUser_ChecksAccountStatus(bool userExists, bool isActive)
+        public void FindActiveUser_AccountStatus_ReturnsOnlyActiveUser(bool userExists, bool isActive)
         {
             AppUser user = userExists ? new AppUser { Username = "user01", IsActive = isActive } : null;
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -71,7 +72,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Authenticate_NullModel()
+        public void Authenticate_NullModel_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             AuthService service = new AuthService(repository.Object);
@@ -85,7 +86,7 @@ namespace UserManagement.Tests
         [DataTestMethod]
         [DataRow(false)]
         [DataRow(true)]
-        public void Authenticate_UnavailableUser(bool userExists)
+        public void Authenticate_UnavailableUser_ThrowsUnauthorized(bool userExists)
         {
             AppUser user = userExists ? new AppUser { Username = "user01", IsActive = false } : null;
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -104,7 +105,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Authenticate_WrongPassword()
+        public void Authenticate_IncorrectPassword_ThrowsUnauthorized()
         {
             AppUser user = CreateActiveUser("Password123!");
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -123,7 +124,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Register_NullModel()
+        public void Register_NullModel_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             AuthService service = new AuthService(repository.Object);
@@ -135,7 +136,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void Register_DuplicateUsername()
+        public void Register_DuplicateUsername_ThrowsBadRequest()
         {
             AppUser existingUser = new AppUser { Username = "user01" };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -149,14 +150,15 @@ namespace UserManagement.Tests
                 Password = "Password123!"
             };
 
-            ValidationException error = Assert.ThrowsException<ValidationException>(
+            BadRequestException error = Assert.ThrowsException<BadRequestException>(
                 () => service.Register(model));
 
-            Assert.IsTrue(error.Errors.ContainsKey("Username"));
+            Assert.AreEqual(ErrorCode.UsernameAlreadyExists, error.ErrorCode);
+            Assert.AreEqual(ErrorMessages.UsernameAlreadyExists, error.UserMessage);
         }
 
         [TestMethod]
-        public void ChangePassword_NullModel()
+        public void ChangePassword_NullModel_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             AuthService service = new AuthService(repository.Object);
@@ -168,7 +170,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void ChangePassword_UserNotFound()
+        public void ChangePassword_UserNotFound_ThrowsUnauthorized()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("user01")).Returns((AppUser)null);
@@ -186,7 +188,7 @@ namespace UserManagement.Tests
         }
 
         [TestMethod]
-        public void ChangePassword_WrongCurrentPassword()
+        public void ChangePassword_WrongPassword_ThrowsBadRequest()
         {
             AppUser user = CreateActiveUser("Password123!");
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -198,16 +200,17 @@ namespace UserManagement.Tests
                 NewPassword = "NewPassword123!"
             };
 
-            ValidationException error = Assert.ThrowsException<ValidationException>(
+            BadRequestException error = Assert.ThrowsException<BadRequestException>(
                 () => service.ChangePassword(model, user.Username));
 
-            Assert.IsTrue(error.Errors.ContainsKey("CurrentPassword"));
+            Assert.AreEqual(ErrorCode.CurrentPasswordIncorrect, error.ErrorCode);
+            Assert.AreEqual(ErrorMessages.CurrentPasswordIncorrect, error.UserMessage);
         }
 
         [DataTestMethod]
         [DataRow(true)]
         [DataRow(false)]
-        public void ChangePassword_HandlesSaveResult(bool saved)
+        public void ChangePassword_SaveResult_HandlesSuccessOrFailure(bool saved)
         {
             AppUser user = CreateActiveUser("Password123!");
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
@@ -228,11 +231,11 @@ namespace UserManagement.Tests
                 return;
             }
 
-            ValidationException error = Assert.ThrowsException<ValidationException>(
+            BadRequestException error = Assert.ThrowsException<BadRequestException>(
                 () => service.ChangePassword(model, user.Username));
 
-            Assert.AreEqual("Tài khoản không còn tồn tại. Vui lòng đăng nhập lại.",
-                error.Errors["CurrentPassword"][0]);
+            Assert.AreEqual(ErrorCode.AccountUnavailable, error.ErrorCode);
+            Assert.AreEqual(ErrorMessages.AccountUnavailable, error.UserMessage);
         }
 
         private static AppUser CreateActiveUser(string password)

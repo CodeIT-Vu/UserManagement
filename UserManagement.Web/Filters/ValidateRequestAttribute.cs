@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Web.Mvc;
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
@@ -23,13 +23,9 @@ namespace UserManagement.Web.Filters
 
                 foreach (ModelError error in field.Value.Errors)
                 {
-                    string message = error.ErrorMessage;
-                    if (string.IsNullOrEmpty(message))
-                    {
-                        message = ErrorMessages.InvalidRequest;
-                    }
-
-                    messages.Add(message);
+                    messages.Add(string.IsNullOrEmpty(error.ErrorMessage)
+                        ? ErrorMessages.InvalidRequest
+                        : error.ErrorMessage);
                 }
 
                 if (messages.Count > 0)
@@ -38,7 +34,7 @@ namespace UserManagement.Web.Filters
                 }
             }
 
-            throw new ValidationException(ErrorMessages.InvalidRequest, errors);
+            throw new RequestValidationException(ErrorMessages.InvalidRequest, errors);
         }
     }
 }

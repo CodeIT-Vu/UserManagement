@@ -3,6 +3,7 @@ using UserManagement.Web.Constants;
 using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Security;
+using UserManagement.Web.Util;
 using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Services
@@ -18,19 +19,14 @@ namespace UserManagement.Web.Services
 
         public AppUser Authenticate(LoginViewModel model)
         {
-            if (model == null)
+            if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrEmpty(model.Password))
             {
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
-            string username = model.Username.Trim();
+            string username = StringUtil.CleanText(model.Username);
             AppUser user = _userRepository.GetByUsername(username);
 
-            if (user == null)
-            {
-                throw new UnauthorizedException(ErrorCode.InvalidLogin, ErrorMessages.InvalidLogin);
-            }
-
-            if (!user.IsActive)
+            if (user == null || !user.IsActive)
             {
                 throw new UnauthorizedException(ErrorCode.InvalidLogin, ErrorMessages.InvalidLogin);
             }
@@ -52,72 +48,52 @@ namespace UserManagement.Web.Services
         public AppUser FindActiveUser(string username)
         {
             AppUser user = _userRepository.GetByUsername(username);
-            if (user == null)
-            {
-                return null;
-            }
-
-            if (!user.IsActive)
-            {
-                return null;
-            }
-
-            return user;
+            return user == null || !user.IsActive ? null : user;
         }
 
         public void Register(RegisterViewModel model)
         {
-            if (model == null)
+            if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.FullName) || string.IsNullOrEmpty(model.Password))
             {
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
 
-            model.Username = model.Username.Trim();
-            model.FullName = model.FullName.Trim();
-            if (!string.IsNullOrWhiteSpace(model.Email))
-            {
-                model.Email = model.Email.Trim();
-            }
-            else
-            {
-                model.Email = null;
-            }
+            model.Username = StringUtil.CleanText(model.Username);
+            model.FullName = StringUtil.CleanText(model.FullName);
+            model.Email = StringUtil.CleanText(model.Email);
 
             AppUser existingUser = _userRepository.GetByUsername(model.Username);
             if (existingUser != null)
             {
-                throw new ValidationException("Username", "Tên đăng nhập đã được sử dụng.");
+                throw new BadRequestException(ErrorCode.UsernameAlreadyExists, ErrorMessages.UsernameAlreadyExists);
             }
 
             PasswordHashResult passwordHash = PasswordHasher.HashPassword(model.Password);
 
-            AppUser user = new AppUser();
-            user.Username = model.Username;
-            user.FullName = model.FullName;
-            user.Email = model.Email;
-            user.PasswordHash = passwordHash.Hash;
-            user.PasswordSalt = passwordHash.Salt;
-            user.PasswordIterations = PasswordHasher.Iterations;
+            AppUser user = new AppUser
+            {
+                Username = model.Username,
+                FullName = model.FullName,
+                Email = model.Email,
+                PasswordHash = passwordHash.Hash,
+                PasswordSalt = passwordHash.Salt,
+                PasswordIterations = PasswordHasher.Iterations
+            };
 
             _userRepository.Create(user);
         }
 
         public void ChangePassword(ChangePasswordViewModel model, string currentUsername)
         {
-            if (model == null)
+            if (model == null || string.IsNullOrEmpty(model.CurrentPassword) || string.IsNullOrEmpty(model.NewPassword))
             {
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
-            AppUser user = FindActiveUser(currentUsername);
-            if (user == null)
-            {
-                throw new UnauthorizedException(ErrorCode.AuthenticationRequired, ErrorMessages.AuthenticationRequired);
-            }
-
+            AppUser user = FindActiveUser(currentUsername) ?? throw new UnauthorizedException(ErrorCode.AuthenticationRequired, ErrorMessages.AuthenticationRequired);
             bool passwordMatches = PasswordHasher.VerifyPassword(model.CurrentPassword, user.PasswordHash, user.PasswordSalt, user.PasswordIterations);
             if (!passwordMatches)
             {
-                throw new ValidationException("CurrentPassword", "Mật khẩu hiện tại không đúng.");
+                throw new BadRequestException(ErrorCode.CurrentPasswordIncorrect, ErrorMessages.CurrentPasswordIncorrect);
             }
 
             PasswordHashResult passwordHash = PasswordHasher.HashPassword(model.NewPassword);
@@ -126,7 +102,7 @@ namespace UserManagement.Web.Services
                 user.UserId, passwordHash.Hash, passwordHash.Salt, PasswordHasher.Iterations);
             if (!updated)
             {
-                throw new ValidationException("CurrentPassword", "Tài khoản không còn tồn tại. Vui lòng đăng nhập lại.");
+                throw new BadRequestException(ErrorCode.AccountUnavailable, ErrorMessages.AccountUnavailable);
             }
         }
     }

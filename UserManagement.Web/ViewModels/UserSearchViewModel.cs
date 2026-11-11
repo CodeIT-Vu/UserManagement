@@ -1,0 +1,21 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace UserManagement.Web.ViewModels
+{
+    public class UserSearchViewModel
+    {
+        [StringLength(50, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự.")]
+        [Display(Name = "Tên đăng nhập")]
+        public string Username { get; set; }
+
+        [StringLength(150, ErrorMessage = "Họ tên tối đa 150 ký tự.")]
+        [Display(Name = "Họ tên")]
+        public string FullName { get; set; }
+
+        [Display(Name = "Trạng thái")]
+        public bool? IsActive { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Số trang phải lớn hơn 0.")]
+        public int Page { get; set; } = 1;
+    }
+}

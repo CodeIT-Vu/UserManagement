@@ -1,0 +1,148 @@
+@model UserManagement.Web.ViewModels.UserListViewModel
+@{
+    ViewBag.Title = "Danh sách người dùng";
+    int firstPage = Model.Page - 2;
+    if (firstPage < 1)
+    {
+        firstPage = 1;
+    }
+
+    int lastPage = Model.Page + 2;
+    if (lastPage > Model.TotalPages)
+    {
+        lastPage = Model.TotalPages;
+    }
+}
+
+<h1>Danh sách người dùng</h1>
+@Html.Partial("_Search", Model.Search)
+
+<p role="status">Tìm thấy <strong>@Model.TotalCount</strong> người dùng.</p>
+<div class="table-responsive">
+    <table class="table table-bordered table-hover bg-white">
+        <thead class="thead-light">
+            <tr>
+                <th scope="col">Tên đăng nhập</th>
+                <th scope="col">Họ tên</th>
+                <th scope="col">Email</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Users.Count == 0)
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted">Không có người dùng phù hợp.</td>
+                </tr>
+            }
+            @foreach (UserManagement.Web.ViewModels.UserDetailsViewModel user in Model.Users)
+            {
+                string statusText = "Ngừng hoạt động";
+                if (user.IsActive)
+                {
+                    statusText = "Đang hoạt động";
+                }
+
+                string detailsUrl = Url.Action("Details", new { id = user.UserId });
+                string editUrl = Url.Action("Edit", new { id = user.UserId });
+
+                <tr>
+                    <td>@user.Username</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Email</td>
+                    <td>@statusText</td>
+                    <td class="text-nowrap">
+                        <a href="@detailsUrl">Chi tiết</a>
+                        <span class="mx-1" aria-hidden="true">|</span>
+                        <a href="@editUrl">Sửa</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 0)
+{
+    <p>Trang @Model.Page / @Model.TotalPages — @Model.PageSize dòng mỗi trang</p>
+    <nav aria-label="Phân trang người dùng">
+        <ul class="pagination flex-wrap">
+            @if (Model.Page > 1)
+            {
+                string firstPageUrl = Url.Action("Index", new
+                {
+                    Username = Model.Search.Username,
+                    FullName = Model.Search.FullName,
+                    IsActive = Model.Search.IsActive,
+                    Page = 1
+                });
+
+                string previousPageUrl = Url.Action("Index", new
+                {
+                    Username = Model.Search.Username,
+                    FullName = Model.Search.FullName,
+                    IsActive = Model.Search.IsActive,
+                    Page = Model.Page - 1
+                });
+
+                <li class="page-item">
+                    <a class="page-link" href="@firstPageUrl">Đầu</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="@previousPageUrl">Trước</a>
+                </li>
+            }
+            @for (int page = firstPage; page <= lastPage; page++)
+            {
+                if (page == Model.Page)
+                {
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">
+                            @page
+                            <span class="sr-only"> (hiện tại)</span>
+                        </span>
+                    </li>
+                }
+                else
+                {
+                    string pageUrl = Url.Action("Index", new
+                    {
+                        Username = Model.Search.Username,
+                        FullName = Model.Search.FullName,
+                        IsActive = Model.Search.IsActive,
+                        Page = page
+                    });
+                    <li class="page-item">
+                        <a class="page-link" href="@pageUrl">@page</a>
+                    </li>
+                }
+            }
+            @if (Model.Page < Model.TotalPages)
+            {
+                string nextPageUrl = Url.Action("Index", new
+                {
+                    Username = Model.Search.Username,
+                    FullName = Model.Search.FullName,
+                    IsActive = Model.Search.IsActive,
+                    Page = Model.Page + 1
+                });
+
+                string lastPageUrl = Url.Action("Index", new
+                {
+                    Username = Model.Search.Username,
+                    FullName = Model.Search.FullName,
+                    IsActive = Model.Search.IsActive,
+                    Page = Model.TotalPages
+                });
+
+                <li class="page-item">
+                    <a class="page-link" href="@nextPageUrl">Sau</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="@lastPageUrl">Cuối</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

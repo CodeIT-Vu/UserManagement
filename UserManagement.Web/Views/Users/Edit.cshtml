@@ -1,0 +1,37 @@
+﻿@model UserManagement.Web.ViewModels.UserEditViewModel
+@{
+    ViewBag.Title = "Sửa người dùng";
+    string detailsUrl = Url.Action("Details", new { id = Model.UserId });
+}
+
+<h1>Sửa người dùng #@Model.UserId</h1>
+<div class="row">
+    <div class="col-md-7">
+        @using (Html.BeginForm("Update", "Users", FormMethod.Post, new { id = "editUserForm" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(model => model.UserId)
+            <div class="alert alert-danger d-none" data-form-error role="alert"></div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.FullName)
+                @Html.TextBoxFor(model => model.FullName, new { @class = "form-control", maxlength = 150, autocomplete = "name" })
+                @Html.ValidationMessageFor(model => model.FullName, "", new { @class = "text-danger" })
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.Email)
+                @Html.TextBoxFor(model => model.Email, new { @class = "form-control", type = "email", maxlength = 254, autocomplete = "email" })
+                @Html.ValidationMessageFor(model => model.Email, "", new { @class = "text-danger" })
+                <small class="form-text text-muted">Không bắt buộc. Nếu nhập, email phải đúng định dạng.</small>
+            </div>
+            <div class="form-group">
+                <div class="form-check">
+                    @Html.CheckBoxFor(model => model.IsActive, new { @class = "form-check-input" })
+                    @Html.LabelFor(model => model.IsActive, new { @class = "form-check-label" })
+                </div>
+                @Html.ValidationMessageFor(model => model.IsActive, "", new { @class = "text-danger" })
+            </div>
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a class="btn btn-outline-secondary" href="@detailsUrl">Huỷ</a>
+        }
+    </div>
+</div>

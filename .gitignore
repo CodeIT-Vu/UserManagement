@@ -1,0 +1,41 @@
+# Visual Studio and editor-specific settings
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs and restored NuGet packages
+[Bb]in/
+[Oo]bj/
+/packages/
+
+# Test results and coverage reports
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+
+# Local secrets, publish profiles, and database files
+.env
+.env.*
+!.env.example
+*.local.config
+*.pubxml
+*.publishsettings
+*.pfx
+*.p12
+*.mdf
+*.ldf
+*.bak
+
+# Logs, caches, and temporary files
+*.log
+*.tmp
+*.cache
+__pycache__/
+Thumbs.db
+.DS_Store

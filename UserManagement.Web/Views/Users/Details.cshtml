@@ -1,0 +1,35 @@
+﻿@model UserManagement.Web.ViewModels.UserDetailsViewModel
+@{
+    ViewBag.Title = "Chi tiết người dùng";
+    string emailText = Model.Email;
+    if (emailText == null)
+    {
+        emailText = "Chưa có";
+    }
+
+    string statusText = "Ngừng hoạt động";
+    if (Model.IsActive)
+    {
+        statusText = "Đang hoạt động";
+    }
+
+    bool saved = string.Equals(Request.QueryString["saved"], "true", StringComparison.OrdinalIgnoreCase);
+    string editUrl = Url.Action("Edit", new { id = Model.UserId });
+    string listUrl = Url.Action("Index");
+}
+
+<h1>Chi tiết người dùng</h1>
+@if (saved)
+{
+    <div class="alert alert-success" role="status">Đã lưu thay đổi.</div>
+}
+<div class="card card-body mb-3">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Tên đăng nhập</dt><dd class="col-sm-9">@Model.Username</dd>
+        <dt class="col-sm-3">Họ tên</dt><dd class="col-sm-9">@Model.FullName</dd>
+        <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@emailText</dd>
+        <dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@statusText</dd>
+    </dl>
+</div>
+<a class="btn btn-primary" href="@editUrl">Sửa</a>
+<a class="btn btn-outline-secondary" href="@listUrl">Danh sách</a>

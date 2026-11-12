@@ -4,7 +4,6 @@ using System.Linq;
 using Dapper;
 using UserManagement.Web.Models;
 using UserManagement.Web.Util;
-using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Repositories
 {
@@ -28,18 +27,18 @@ namespace UserManagement.Web.Repositories
             }
         }
 
-        public UserListViewModel Search(UserSearchViewModel model, int pageSize)
+        public UserSearchResultData Search(string username, string fullName, bool? isActive, int page, int pageSize)
         {
             string procedureName = "dbo.usp_AppUser_Search";
 
-            long pageNumber = model.Page;
+            long pageNumber = page;
             long offset = (pageNumber - 1) * pageSize;
 
             DynamicParameters parameters = new DynamicParameters(new
             {
-                Username = model.Username ?? "",
-                FullName = model.FullName ?? "",
-                IsActive = model.IsActive,
+                Username = username ?? "",
+                FullName = fullName ?? "",
+                IsActive = isActive,
                 Offset = offset,
                 PageSize = pageSize
             });
@@ -53,18 +52,15 @@ namespace UserManagement.Web.Repositories
                     parameters,
                     commandType: CommandType.StoredProcedure))
                 {
-                    UserListViewModel page = results.ReadSingle<UserListViewModel>();
-                    page.Page = model.Page;
-                    page.PageSize = pageSize;
+                    UserSearchResultData result = results.ReadSingle<UserSearchResultData>();
+                    result.Users = results.Read<UserData>().ToList();
 
-                    page.Users = results.Read<UserDetailsViewModel>().ToList();
-
-                    return page;
+                    return result;
                 }
             }
         }
 
-        public UserDetailsViewModel GetById(int id)
+        public UserData GetById(int id)
         {
             string procedureName = "dbo.usp_AppUser_GetById";
             DynamicParameters parameters = new DynamicParameters(new { UserId = id });
@@ -73,7 +69,7 @@ namespace UserManagement.Web.Repositories
             {
                 connection.Open();
 
-                UserDetailsViewModel user = connection.QuerySingleOrDefault<UserDetailsViewModel>(
+                UserData user = connection.QuerySingleOrDefault<UserData>(
                     procedureName,
                     parameters,
                     commandType: CommandType.StoredProcedure);
@@ -82,15 +78,15 @@ namespace UserManagement.Web.Repositories
             }
         }
 
-        public bool Update(UserEditViewModel model)
+        public bool Update(int userId, string fullName, string email, bool isActive)
         {
             string procedureName = "dbo.usp_AppUser_Update";
             DynamicParameters parameters = new DynamicParameters(new
             {
-                UserId = model.UserId,
-                FullName = model.FullName,
-                Email = model.Email,
-                IsActive = model.IsActive
+                UserId = userId,
+                FullName = fullName,
+                Email = email,
+                IsActive = isActive
             });
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())

@@ -7,6 +7,9 @@ namespace UserManagement.Web.Security
     public static class PasswordHasher
     {
         public const int Iterations = 600000;
+        private const int SaltSizeInBytes = 16;
+        private const int HashSizeInBytes = 32;
+        private const int MinimumAcceptedIterations = 100000;
 
         public static PasswordHashResult HashPassword(string password)
         {
@@ -15,7 +18,7 @@ namespace UserManagement.Web.Security
                 throw new ArgumentException(ErrorMessages.PasswordRequired);
             }
 
-            byte[] salt = new byte[16];
+            byte[] salt = new byte[SaltSizeInBytes];
             byte[] hash;
 
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
@@ -29,7 +32,7 @@ namespace UserManagement.Web.Security
                 Iterations,
                 HashAlgorithmName.SHA256))
             {
-                hash = pbkdf2.GetBytes(32);
+                hash = pbkdf2.GetBytes(HashSizeInBytes);
             }
 
             PasswordHashResult result = new PasswordHashResult
@@ -47,7 +50,7 @@ namespace UserManagement.Web.Security
             byte[] salt,
             int iterations)
         {
-            if (string.IsNullOrEmpty(password) || storedHash == null || storedHash.Length != 32 || salt == null || salt.Length != 16 || iterations < 100000)
+            if (string.IsNullOrEmpty(password) || storedHash == null || storedHash.Length != HashSizeInBytes || salt == null || salt.Length != SaltSizeInBytes || iterations < MinimumAcceptedIterations)
             {
                 return false;
             }
@@ -60,7 +63,7 @@ namespace UserManagement.Web.Security
                 iterations,
                 HashAlgorithmName.SHA256))
             {
-                newHash = pbkdf2.GetBytes(32);
+                newHash = pbkdf2.GetBytes(HashSizeInBytes);
             }
 
             int difference = 0;

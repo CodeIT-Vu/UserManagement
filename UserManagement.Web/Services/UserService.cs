@@ -1,6 +1,7 @@
 ﻿using System;
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
+using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Util;
 using UserManagement.Web.ViewModels;
@@ -10,6 +11,7 @@ namespace UserManagement.Web.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
+        private const int DefaultPageSize = 10;
 
         public UserService(IUserRepository userRepository)
         {
@@ -26,35 +28,37 @@ namespace UserManagement.Web.Services
             model.Username = StringUtil.CleanText(model.Username);
             model.FullName = StringUtil.CleanText(model.FullName);
 
-            int pageSize = 10;
-            UserListViewModel result = _userRepository.Search(model, pageSize);
-            int totalPages = result.TotalPages;
+            UserSearchResultData data = _userRepository.Search(model.Username, model.FullName, model.IsActive, model.Page, DefaultPageSize);
+            int totalPages = PaginationUtil.CalculateTotalPages(data.TotalCount, DefaultPageSize);
 
             if (totalPages > 0 && model.Page > totalPages)
             {
                 model.Page = totalPages;
-                result = _userRepository.Search(model, pageSize);
+                data = _userRepository.Search(model.Username, model.FullName, model.IsActive, model.Page, DefaultPageSize);
+                totalPages = PaginationUtil.CalculateTotalPages(data.TotalCount, DefaultPageSize);
             }
 
-            if (result.TotalCount == 0)
+            if (data.TotalCount == 0)
             {
                 model.Page = 1;
             }
 
-            result.Page = model.Page;
-            result.PageSize = pageSize;
-            result.Search = model;
-            return result;
+            return UserMappingUtil.ToListViewModel(data, model, model.Page, DefaultPageSize, totalPages);
         }
 
         public UserDetailsViewModel GetDetails(int id)
+        {
+            return UserMappingUtil.ToDetailsViewModel(GetRequiredUser(id));
+        }
+
+        private UserData GetRequiredUser(int id)
         {
             if (id <= 0)
             {
                 throw new ApiException(404, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
             }
 
-            UserDetailsViewModel user = _userRepository.GetById(id);
+            UserData user = _userRepository.GetById(id);
             if (user == null)
             {
                 throw new ApiException(404, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
@@ -65,16 +69,7 @@ namespace UserManagement.Web.Services
 
         public UserEditViewModel GetEdit(int id)
         {
-            UserDetailsViewModel user = GetDetails(id);
-            UserEditViewModel model = new UserEditViewModel
-            {
-                UserId = user.UserId,
-                FullName = user.FullName,
-                Email = user.Email,
-                IsActive = user.IsActive
-            };
-
-            return model;
+            return UserMappingUtil.ToEditViewModel(GetRequiredUser(id));
         }
 
         public void Update(UserEditViewModel model, string currentUsername)
@@ -86,7 +81,7 @@ namespace UserManagement.Web.Services
 
             model.FullName = StringUtil.CleanText(model.FullName);
             model.Email = StringUtil.CleanText(model.Email);
-            UserDetailsViewModel existing = GetDetails(model.UserId);
+            UserData existing = GetRequiredUser(model.UserId);
 
             bool isCurrentUser = string.Equals(existing.Username, currentUsername, StringComparison.OrdinalIgnoreCase);
             if (isCurrentUser && !model.IsActive)
@@ -94,7 +89,7 @@ namespace UserManagement.Web.Services
                 throw new BadRequestException(ErrorCode.CannotDeactivateOwnAccount, ErrorMessages.CannotDeactivateOwnAccount);
             }
 
-            bool updated = _userRepository.Update(model);
+            bool updated = _userRepository.Update(model.UserId, model.FullName, model.Email, model.IsActive);
             if (!updated)
             {
                 throw new ApiException(404, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);

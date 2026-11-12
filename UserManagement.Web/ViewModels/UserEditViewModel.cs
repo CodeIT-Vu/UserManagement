@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
@@ -8,12 +9,12 @@ namespace UserManagement.Web.ViewModels
         public int UserId { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập họ tên.")]
-        [StringLength(150, ErrorMessage = "Họ tên tối đa 150 ký tự.")]
+        [StringLength(UserValidationLimits.FullNameMaxLength, ErrorMessage = "Họ tên tối đa 150 ký tự.")]
         [Display(Name = "Họ tên")]
         public string FullName { get; set; }
 
         [EmailAddress(ErrorMessage = "Email không đúng định dạng.")]
-        [StringLength(254, ErrorMessage = "Email tối đa 254 ký tự.")]
+        [StringLength(UserValidationLimits.EmailMaxLength, ErrorMessage = "Email tối đa 254 ký tự.")]
         [Display(Name = "Email")]
         public string Email { get; set; }
 

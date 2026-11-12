@@ -1,4 +1,4 @@
-namespace UserManagement.Web.Util
+﻿namespace UserManagement.Web.Util
 {
     public static class StringUtil
     {

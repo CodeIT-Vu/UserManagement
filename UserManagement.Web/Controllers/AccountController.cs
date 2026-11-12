@@ -1,5 +1,6 @@
 ﻿using System.Web.Mvc;
 using UserManagement.Web.Filters;
+using UserManagement.Web.DTOs;
 using UserManagement.Web.Models;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
@@ -31,7 +32,7 @@ namespace UserManagement.Web.Controllers
         [ValidateRequest]
         public ActionResult Login(LoginViewModel model)
         {
-            AppUser user = _authService.Authenticate(model);
+            CurrentUserDto user = _authService.Authenticate(model);
             SetLoginSessionInfo(user);
 
             string redirectUrl = GetLoginRedirectUrl(model.ReturnUrl);

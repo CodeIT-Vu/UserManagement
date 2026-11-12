@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Web.Mvc;
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;

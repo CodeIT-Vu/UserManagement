@@ -1,6 +1,6 @@
-@using UserManagement.Web.Models
+﻿@using UserManagement.Web.DTOs
 @{
-    AppUser currentUser = Context.Items["CurrentUser"] as AppUser;
+    CurrentUserDto currentUser = Context.Items["CurrentUser"] as CurrentUserDto;
     string loginUrl = Url.Action("Login", "Account");
 }
 <!DOCTYPE html>

@@ -1,13 +1,14 @@
-@model UserManagement.Web.ViewModels.UserListViewModel
+﻿@model UserManagement.Web.ViewModels.UserListViewModel
 @{
+    const int PageLinksOnEachSide = 2;
     ViewBag.Title = "Danh sách người dùng";
-    int firstPage = Model.Page - 2;
+    int firstPage = Model.Page - PageLinksOnEachSide;
     if (firstPage < 1)
     {
         firstPage = 1;
     }
 
-    int lastPage = Model.Page + 2;
+    int lastPage = Model.Page + PageLinksOnEachSide;
     if (lastPage > Model.TotalPages)
     {
         lastPage = Model.TotalPages;

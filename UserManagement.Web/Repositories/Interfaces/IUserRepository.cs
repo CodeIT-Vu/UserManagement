@@ -2,17 +2,15 @@
 
 namespace UserManagement.Web.Repositories
 {
-    using UserManagement.Web.ViewModels;
-
     public interface IUserRepository
     {
         AppUser GetByUsername(string username);
 
-        UserListViewModel Search(UserSearchViewModel model, int pageSize);
+        UserSearchResultData Search(string username, string fullName, bool? isActive, int page, int pageSize);
 
-        UserDetailsViewModel GetById(int id);
+        UserData GetById(int id);
 
-        bool Update(UserEditViewModel model);
+        bool Update(int userId, string fullName, string email, bool isActive);
 
         void Create(AppUser user);
 

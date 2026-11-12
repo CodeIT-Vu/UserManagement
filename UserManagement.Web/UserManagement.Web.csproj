@@ -113,6 +113,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AppUser.cs" />
+    <Compile Include="Models\UserData.cs" />
+    <Compile Include="Models\UserSearchResultData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repositories\UserRepository.cs" />
     <Compile Include="Security\PasswordHasher.cs" />
@@ -228,6 +230,8 @@
     <Compile Include="Filters\ValidateRequestAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DTOs\CurrentUserDto.cs" />
+    <Compile Include="Constants\UserValidationLimits.cs" />
     <Compile Include="Constants\ErrorCode.cs" />
     <Compile Include="Constants\ErrorMessages.cs" />
     <Compile Include="Controllers\BaseController.cs" />
@@ -237,6 +241,8 @@
     <Compile Include="Models\ApiSuccessResponse.cs" />
     <Compile Include="Util\HttpRequestUtil.cs" />
     <Compile Include="Util\StringUtil.cs" />
+    <Compile Include="Util\UserMappingUtil.cs" />
+    <Compile Include="Util\PaginationUtil.cs" />
     <Compile Include="Util\DbConnectionFactory.cs" />
     <Compile Include="Repositories\Interfaces\IUserRepository.cs" />
     <Compile Include="Services\Interfaces\IAuthService.cs" />

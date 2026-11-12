@@ -4,6 +4,7 @@ using System.Web.Mvc;
 using System.Web.Mvc.Filters;
 using System.Web.Security;
 using UserManagement.Web.Constants;
+using UserManagement.Web.DTOs;
 using UserManagement.Web.Models;
 using UserManagement.Web.Services;
 using UserManagement.Web.Util;
@@ -28,7 +29,7 @@ namespace UserManagement.Web.Filters
             }
 
             string username = principal.Identity.Name;
-            AppUser user = _authService.FindActiveUser(username);
+            CurrentUserDto user = _authService.FindActiveUser(username);
 
             if (user == null)
             {

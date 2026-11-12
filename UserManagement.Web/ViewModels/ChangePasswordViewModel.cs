@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
@@ -10,7 +11,7 @@ namespace UserManagement.Web.ViewModels
         public string CurrentPassword { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu mới.")]
-        [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu mới phải có 8–100 ký tự.")]
+        [StringLength(UserValidationLimits.PasswordMaxLength, MinimumLength = UserValidationLimits.PasswordMinLength, ErrorMessage = "Mật khẩu mới phải có 8–100 ký tự.")]
         [DataType(DataType.Password)]
         [Display(Name = "Mật khẩu mới")]
         public string NewPassword { get; set; }

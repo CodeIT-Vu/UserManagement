@@ -1,5 +1,6 @@
 ﻿using UserManagement.Web.Exceptions;
 using UserManagement.Web.Constants;
+using UserManagement.Web.DTOs;
 using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Security;
@@ -17,7 +18,7 @@ namespace UserManagement.Web.Services
             _userRepository = repository;
         }
 
-        public AppUser Authenticate(LoginViewModel model)
+        public CurrentUserDto Authenticate(LoginViewModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrEmpty(model.Password))
             {
@@ -42,13 +43,13 @@ namespace UserManagement.Web.Services
                 throw new UnauthorizedException(ErrorCode.InvalidLogin, ErrorMessages.InvalidLogin);
             }
 
-            return user;
+            return UserMappingUtil.ToCurrentUserDto(user);
         }
 
-        public AppUser FindActiveUser(string username)
+        public CurrentUserDto FindActiveUser(string username)
         {
             AppUser user = _userRepository.GetByUsername(username);
-            return user == null || !user.IsActive ? null : user;
+            return user == null || !user.IsActive ? null : UserMappingUtil.ToCurrentUserDto(user);
         }
 
         public void Register(RegisterViewModel model)
@@ -89,7 +90,11 @@ namespace UserManagement.Web.Services
             {
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
-            AppUser user = FindActiveUser(currentUsername) ?? throw new UnauthorizedException(ErrorCode.AuthenticationRequired, ErrorMessages.AuthenticationRequired);
+            AppUser user = _userRepository.GetByUsername(currentUsername);
+            if (user == null || !user.IsActive)
+            {
+                throw new UnauthorizedException(ErrorCode.AuthenticationRequired, ErrorMessages.AuthenticationRequired);
+            }
             bool passwordMatches = PasswordHasher.VerifyPassword(model.CurrentPassword, user.PasswordHash, user.PasswordSalt, user.PasswordIterations);
             if (!passwordMatches)
             {

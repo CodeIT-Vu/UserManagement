@@ -1,12 +1,12 @@
 ﻿using System.Web.Mvc;
 using System.Web.Security;
-using UserManagement.Web.Models;
+using UserManagement.Web.DTOs;
 
 namespace UserManagement.Web.Controllers
 {
     public class BaseController : Controller
     {
-        protected void SetLoginSessionInfo(AppUser user)
+        protected void SetLoginSessionInfo(CurrentUserDto user)
         {
             FormsAuthentication.SetAuthCookie(user.Username, false);
         }

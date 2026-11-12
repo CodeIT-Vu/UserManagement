@@ -1,11 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
-        [StringLength(50)]
+        [StringLength(UserValidationLimits.UsernameMaxLength)]
         [Display(Name = "Tên đăng nhập")]
         public string Username { get; set; }
 

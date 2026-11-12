@@ -1,14 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
     public class UserSearchViewModel
     {
-        [StringLength(50, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự.")]
+        [StringLength(UserValidationLimits.UsernameMaxLength, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự.")]
         [Display(Name = "Tên đăng nhập")]
         public string Username { get; set; }
 
-        [StringLength(150, ErrorMessage = "Họ tên tối đa 150 ký tự.")]
+        [StringLength(UserValidationLimits.FullNameMaxLength, ErrorMessage = "Họ tên tối đa 150 ký tự.")]
         [Display(Name = "Họ tên")]
         public string FullName { get; set; }
 

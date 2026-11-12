@@ -9,8 +9,15 @@ using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Services
 {
+    /// <summary>
+    /// Xử lý nghiệp vụ đăng nhập, đăng ký và đổi mật khẩu.
+    /// </summary>
     public class AuthService : IAuthService
     {
+        /// <summary>
+        /// Bộ hash giả dùng lại khi tài khoản không tồn tại hoặc bị khóa để vẫn thực hiện PBKDF2.
+        /// </summary>
+        private static readonly PasswordHashResult DummyPasswordHash = PasswordHasher.HashPassword("DummyLoginPassword");
         private readonly IUserRepository _userRepository;
 
         public AuthService(IUserRepository repository)
@@ -18,6 +25,9 @@ namespace UserManagement.Web.Services
             _userRepository = repository;
         }
 
+        /// <summary>
+        /// Kiểm tra mật khẩu thật hoặc giả trước khi kết luận đăng nhập; trả về thông tin người dùng an toàn.
+        /// </summary>
         public CurrentUserDto Authenticate(LoginViewModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrEmpty(model.Password))
@@ -27,18 +37,18 @@ namespace UserManagement.Web.Services
             string username = StringUtil.CleanText(model.Username);
             AppUser user = _userRepository.GetByUsername(username);
 
-            if (user == null || !user.IsActive)
-            {
-                throw new UnauthorizedException(ErrorCode.InvalidLogin, ErrorMessages.InvalidLogin);
-            }
+            bool canAuthenticate = user != null && user.IsActive;
+            byte[] hash = canAuthenticate ? user.PasswordHash : DummyPasswordHash.Hash;
+            byte[] salt = canAuthenticate ? user.PasswordSalt : DummyPasswordHash.Salt;
+            int iterations = canAuthenticate ? user.PasswordIterations : PasswordHasher.Iterations;
 
             bool passwordMatches = PasswordHasher.VerifyPassword(
                 model.Password,
-                user.PasswordHash,
-                user.PasswordSalt,
-                user.PasswordIterations);
+                hash,
+                salt,
+                iterations);
 
-            if (!passwordMatches)
+            if (!canAuthenticate || !passwordMatches)
             {
                 throw new UnauthorizedException(ErrorCode.InvalidLogin, ErrorMessages.InvalidLogin);
             }
@@ -52,6 +62,18 @@ namespace UserManagement.Web.Services
             return user == null || !user.IsActive ? null : UserMappingUtil.ToCurrentUserDto(user);
         }
 
+        public void Logout(int userId)
+        {
+            bool updated = _userRepository.IncreaseAuthVersion(userId);
+            if (!updated)
+            {
+                throw new UnauthorizedException(ErrorCode.AuthenticationRequired, ErrorMessages.AuthenticationRequired);
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra tên đăng nhập và băm mật khẩu trước khi tạo tài khoản.
+        /// </summary>
         public void Register(RegisterViewModel model)
         {
             if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.FullName) || string.IsNullOrEmpty(model.Password))
@@ -81,9 +103,19 @@ namespace UserManagement.Web.Services
                 PasswordIterations = PasswordHasher.Iterations
             };
 
-            _userRepository.Create(user);
+            try
+            {
+                _userRepository.Create(user);
+            }
+            catch (DuplicateUsernameException)
+            {
+                throw new BadRequestException(ErrorCode.UsernameAlreadyExists, ErrorMessages.UsernameAlreadyExists);
+            }
         }
 
+        /// <summary>
+        /// Xác minh mật khẩu hiện tại trước khi lưu mật khẩu mới.
+        /// </summary>
         public void ChangePassword(ChangePasswordViewModel model, string currentUsername)
         {
             if (model == null || string.IsNullOrEmpty(model.CurrentPassword) || string.IsNullOrEmpty(model.NewPassword))

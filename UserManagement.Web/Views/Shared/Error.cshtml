@@ -1,3 +1,7 @@
 ﻿@{ ViewBag.Title = "Có lỗi xảy ra"; }
 <h1>Không thể xử lý yêu cầu</h1>
 <p>@(ViewData["Message"] ?? "Có lỗi xảy ra, vui lòng thử lại.")</p>
+@if (ViewData["TraceId"] != null)
+{
+    <p>Mã tra cứu: @ViewData["TraceId"]</p>
+}

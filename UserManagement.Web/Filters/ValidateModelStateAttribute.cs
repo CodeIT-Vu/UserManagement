@@ -5,7 +5,7 @@ using UserManagement.Web.Exceptions;
 
 namespace UserManagement.Web.Filters
 {
-    public class ValidateRequestAttribute : ActionFilterAttribute
+    public class ValidateModelStateAttribute : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {

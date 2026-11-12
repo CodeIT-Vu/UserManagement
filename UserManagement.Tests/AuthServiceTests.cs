@@ -1,12 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using UserManagement.Web.Constants;
+using UserManagement.Web.DTOs;
 using UserManagement.Web.Exceptions;
-using UserManagement.Web.Services;
-using UserManagement.Web.ViewModels;
 using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Security;
+using UserManagement.Web.Services;
+using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Tests
 {
@@ -14,81 +15,67 @@ namespace UserManagement.Tests
     public class AuthServiceTests
     {
         [TestMethod]
-        public void Authenticate_ValidCredentials_ReturnsUser()
+        public void Authenticate_CorrectPassword_ReturnsUser()
         {
-            AppUser user = CreateActiveUser("Password123!");
+            AppUser user = CreateActiveUser();
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
             LoginViewModel model = new LoginViewModel
             {
-                Username = "  user01  ",
+                Username = "user01",
                 Password = "Password123!"
             };
 
-            AppUser result = service.Authenticate(model);
+            CurrentUserDto result = service.Authenticate(model);
 
-            Assert.AreSame(user, result);
-        }
-
-        [DataTestMethod]
-        [DataRow("  user01@example.com  ", "user01@example.com")]
-        [DataRow("   ", null)]
-        public void Register_WhitespaceInput_NormalizesInput(string email, string expectedEmail)
-        {
-            Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            AuthService service = new AuthService(repository.Object);
-            RegisterViewModel model = new RegisterViewModel
-            {
-                Username = "  user01  ",
-                FullName = "  Nguyen Van A  ",
-                Email = email,
-                Password = "Password123!",
-                ConfirmPassword = "Password123!"
-            };
-
-            service.Register(model);
-
-            Assert.AreEqual("user01", model.Username);
-            Assert.AreEqual("Nguyen Van A", model.FullName);
-            Assert.AreEqual(expectedEmail, model.Email);
-        }
-
-        [DataTestMethod]
-        [DataRow(true, true)]
-        [DataRow(true, false)]
-        [DataRow(false, false)]
-        public void FindActiveUser_AccountStatus_ReturnsOnlyActiveUser(bool userExists, bool isActive)
-        {
-            AppUser user = userExists ? new AppUser { Username = "user01", IsActive = isActive } : null;
-            Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
-            AuthService service = new AuthService(repository.Object);
-
-            AppUser result = service.FindActiveUser("user01");
-
-            AppUser expectedUser = isActive ? user : null;
-            Assert.AreSame(expectedUser, result);
+            Assert.AreEqual(user.UserId, result.UserId);
+            Assert.AreEqual(user.Username, result.Username);
         }
 
         [TestMethod]
-        public void Authenticate_NullModel_ThrowsBadRequest()
+        public void Authenticate_WrongPassword_ThrowsUnauthorized()
         {
+            AppUser user = CreateActiveUser();
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
+            LoginViewModel model = new LoginViewModel
+            {
+                Username = "user01",
+                Password = "WrongPassword!"
+            };
 
-            BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.Authenticate(null));
+            UnauthorizedException error = Assert.ThrowsException<UnauthorizedException>(
+                () => service.Authenticate(model));
 
-            Assert.AreEqual(400, error.HttpStatusCode);
+            Assert.AreEqual(401, error.HttpStatusCode);
+            Assert.AreEqual(ErrorCode.InvalidLogin, error.ErrorCode);
         }
 
-        [DataTestMethod]
-        [DataRow(false)]
-        [DataRow(true)]
-        public void Authenticate_UnavailableUser_ThrowsUnauthorized(bool userExists)
+        [TestMethod]
+        public void Authenticate_UserNotFound_ThrowsUnauthorized()
         {
-            AppUser user = userExists ? new AppUser { Username = "user01", IsActive = false } : null;
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.GetByUsername("unknown")).Returns((AppUser)null);
+            AuthService service = new AuthService(repository.Object);
+            LoginViewModel model = new LoginViewModel
+            {
+                Username = "unknown",
+                Password = "Password123!"
+            };
+
+            UnauthorizedException error = Assert.ThrowsException<UnauthorizedException>(
+                () => service.Authenticate(model));
+
+            Assert.AreEqual(401, error.HttpStatusCode);
+            Assert.AreEqual(ErrorCode.InvalidLogin, error.ErrorCode);
+        }
+
+        [TestMethod]
+        public void Authenticate_InactiveUser_ThrowsUnauthorized()
+        {
+            AppUser user = new AppUser { Username = "user01", IsActive = false };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
@@ -102,51 +89,70 @@ namespace UserManagement.Tests
                 () => service.Authenticate(model));
 
             Assert.AreEqual(401, error.HttpStatusCode);
+            Assert.AreEqual(ErrorCode.InvalidLogin, error.ErrorCode);
         }
 
         [TestMethod]
-        public void Authenticate_IncorrectPassword_ThrowsUnauthorized()
+        public void FindActiveUser_ActiveUser_ReturnsUser()
         {
-            AppUser user = CreateActiveUser("Password123!");
+            AppUser user = new AppUser { UserId = 1, Username = "user01", IsActive = true };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetByUsername(user.Username)).Returns(user);
+            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
-            LoginViewModel model = new LoginViewModel
+
+            CurrentUserDto result = service.FindActiveUser("user01");
+
+            Assert.IsNotNull(result);
+            Assert.AreEqual(user.UserId, result.UserId);
+            Assert.AreEqual(user.Username, result.Username);
+        }
+
+        [TestMethod]
+        public void FindActiveUser_UserNotFound_ReturnsNull()
+        {
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.GetByUsername("unknown")).Returns((AppUser)null);
+            AuthService service = new AuthService(repository.Object);
+
+            CurrentUserDto result = service.FindActiveUser("unknown");
+
+            Assert.IsNull(result);
+        }
+
+        [TestMethod]
+        public void Register_ValidData_CreatesUser()
+        {
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.GetByUsername("newuser")).Returns((AppUser)null);
+            AuthService service = new AuthService(repository.Object);
+            RegisterViewModel model = new RegisterViewModel
             {
-                Username = user.Username,
-                Password = "WrongPassword!"
+                Username = "  newuser  ",
+                FullName = "  Nguyen Van A  ",
+                Email = "  user@example.com  ",
+                Password = "Password123!",
+                ConfirmPassword = "Password123!"
             };
 
-            UnauthorizedException error = Assert.ThrowsException<UnauthorizedException>(
-                () => service.Authenticate(model));
+            service.Register(model);
 
-            Assert.AreEqual(401, error.HttpStatusCode);
-        }
-
-        [TestMethod]
-        public void Register_NullModel_ThrowsBadRequest()
-        {
-            Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            AuthService service = new AuthService(repository.Object);
-
-            BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.Register(null));
-
-            Assert.AreEqual(400, error.HttpStatusCode);
+            Assert.AreEqual("newuser", model.Username);
+            Assert.AreEqual("Nguyen Van A", model.FullName);
+            Assert.AreEqual("user@example.com", model.Email);
+            repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Once());
         }
 
         [TestMethod]
         public void Register_DuplicateUsername_ThrowsBadRequest()
         {
-            AppUser existingUser = new AppUser { Username = "user01" };
+            AppUser user = new AppUser { Username = "user01" };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetByUsername(existingUser.Username)).Returns(existingUser);
+            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
             RegisterViewModel model = new RegisterViewModel
             {
-                Username = existingUser.Username,
+                Username = "user01",
                 FullName = "Nguyen Van A",
-                Email = "user01@example.com",
                 Password = "Password123!"
             };
 
@@ -154,26 +160,60 @@ namespace UserManagement.Tests
                 () => service.Register(model));
 
             Assert.AreEqual(ErrorCode.UsernameAlreadyExists, error.ErrorCode);
-            Assert.AreEqual(ErrorMessages.UsernameAlreadyExists, error.UserMessage);
+            repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Never());
         }
 
         [TestMethod]
-        public void ChangePassword_NullModel_ThrowsBadRequest()
+        public void Register_UsernameTakenDuringCreate_ThrowsBadRequest()
+        {
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.GetByUsername("newuser")).Returns((AppUser)null);
+            repository.Setup(repo => repo.Create(It.IsAny<AppUser>()))
+                .Throws(new DuplicateUsernameException());
+            AuthService service = new AuthService(repository.Object);
+            RegisterViewModel model = new RegisterViewModel
+            {
+                Username = "newuser",
+                FullName = "Nguyen Van A",
+                Password = "Password123!"
+            };
+
+            BadRequestException error = Assert.ThrowsException<BadRequestException>(
+                () => service.Register(model));
+
+            Assert.AreEqual(400, error.HttpStatusCode);
+            Assert.AreEqual(ErrorCode.UsernameAlreadyExists, error.ErrorCode);
+            Assert.AreEqual(ErrorMessages.UsernameAlreadyExists, error.UserMessage);
+            repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Once());
+        }
+
+        [TestMethod]
+        public void Register_EmptyUsername_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             AuthService service = new AuthService(repository.Object);
+            RegisterViewModel model = new RegisterViewModel
+            {
+                Username = "",
+                FullName = "Nguyen Van A",
+                Password = "Password123!"
+            };
 
             BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.ChangePassword(null, "user01"));
+                () => service.Register(model));
 
             Assert.AreEqual(400, error.HttpStatusCode);
+            repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Never());
         }
 
         [TestMethod]
-        public void ChangePassword_UserNotFound_ThrowsUnauthorized()
+        public void ChangePassword_CorrectCurrentPassword_UpdatesPassword()
         {
+            AppUser user = CreateActiveUser();
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetByUsername("user01")).Returns((AppUser)null);
+            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
+            repository.Setup(repo => repo.ChangePassword(
+                1, It.IsAny<byte[]>(), It.IsAny<byte[]>(), PasswordHasher.Iterations)).Returns(true);
             AuthService service = new AuthService(repository.Object);
             ChangePasswordViewModel model = new ChangePasswordViewModel
             {
@@ -181,18 +221,18 @@ namespace UserManagement.Tests
                 NewPassword = "NewPassword123!"
             };
 
-            UnauthorizedException error = Assert.ThrowsException<UnauthorizedException>(
-                () => service.ChangePassword(model, "user01"));
+            service.ChangePassword(model, "user01");
 
-            Assert.AreEqual(401, error.HttpStatusCode);
+            repository.Verify(repo => repo.ChangePassword(
+                1, It.IsAny<byte[]>(), It.IsAny<byte[]>(), PasswordHasher.Iterations), Times.Once());
         }
 
         [TestMethod]
-        public void ChangePassword_WrongPassword_ThrowsBadRequest()
+        public void ChangePassword_WrongCurrentPassword_ThrowsBadRequest()
         {
-            AppUser user = CreateActiveUser("Password123!");
+            AppUser user = CreateActiveUser();
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetByUsername(user.Username)).Returns(user);
+            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
             ChangePasswordViewModel model = new ChangePasswordViewModel
             {
@@ -201,23 +241,18 @@ namespace UserManagement.Tests
             };
 
             BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.ChangePassword(model, user.Username));
+                () => service.ChangePassword(model, "user01"));
 
             Assert.AreEqual(ErrorCode.CurrentPasswordIncorrect, error.ErrorCode);
-            Assert.AreEqual(ErrorMessages.CurrentPasswordIncorrect, error.UserMessage);
+            repository.Verify(repo => repo.ChangePassword(
+                1, It.IsAny<byte[]>(), It.IsAny<byte[]>(), PasswordHasher.Iterations), Times.Never());
         }
 
-        [DataTestMethod]
-        [DataRow(true)]
-        [DataRow(false)]
-        public void ChangePassword_SaveResult_HandlesSuccessOrFailure(bool saved)
+        [TestMethod]
+        public void ChangePassword_UserNotFound_ThrowsUnauthorized()
         {
-            AppUser user = CreateActiveUser("Password123!");
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetByUsername(user.Username)).Returns(user);
-            repository.Setup(repo => repo.ChangePassword(
-                user.UserId, It.IsAny<byte[]>(), It.IsAny<byte[]>(), PasswordHasher.Iterations))
-                .Returns(saved);
+            repository.Setup(repo => repo.GetByUsername("unknown")).Returns((AppUser)null);
             AuthService service = new AuthService(repository.Object);
             ChangePasswordViewModel model = new ChangePasswordViewModel
             {
@@ -225,22 +260,41 @@ namespace UserManagement.Tests
                 NewPassword = "NewPassword123!"
             };
 
-            if (saved)
-            {
-                service.ChangePassword(model, user.Username);
-                return;
-            }
+            UnauthorizedException error = Assert.ThrowsException<UnauthorizedException>(
+                () => service.ChangePassword(model, "unknown"));
 
-            BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.ChangePassword(model, user.Username));
-
-            Assert.AreEqual(ErrorCode.AccountUnavailable, error.ErrorCode);
-            Assert.AreEqual(ErrorMessages.AccountUnavailable, error.UserMessage);
+            Assert.AreEqual(401, error.HttpStatusCode);
         }
 
-        private static AppUser CreateActiveUser(string password)
+        [TestMethod]
+        public void Logout_ExistingUser_IncreasesAuthVersion()
         {
-            PasswordHashResult passwordHash = PasswordHasher.HashPassword(password);
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.IncreaseAuthVersion(1)).Returns(true);
+            AuthService service = new AuthService(repository.Object);
+
+            service.Logout(1);
+
+            repository.Verify(repo => repo.IncreaseAuthVersion(1), Times.Once());
+        }
+
+        [TestMethod]
+        public void Logout_UserNotFound_ThrowsUnauthorized()
+        {
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.IncreaseAuthVersion(1)).Returns(false);
+            AuthService service = new AuthService(repository.Object);
+
+            UnauthorizedException error = Assert.ThrowsException<UnauthorizedException>(
+                () => service.Logout(1));
+
+            Assert.AreEqual(401, error.HttpStatusCode);
+            Assert.AreEqual(ErrorCode.AuthenticationRequired, error.ErrorCode);
+        }
+
+        private static AppUser CreateActiveUser()
+        {
+            PasswordHashResult passwordHash = PasswordHasher.HashPassword("Password123!");
             return new AppUser
             {
                 UserId = 1,

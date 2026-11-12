@@ -1,6 +1,8 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
+using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
@@ -11,7 +13,7 @@ namespace UserManagement.Tests
     public class UserServiceTests
     {
         [TestMethod]
-        public void Search_ValidPage_ReturnsCleanFilters()
+        public void Search_PageTwo_ReturnsPageTwoAndCleanFilters()
         {
             UserSearchViewModel model = new UserSearchViewModel
             {
@@ -19,9 +21,9 @@ namespace UserManagement.Tests
                 Username = "  user01  ",
                 FullName = "  Nguyen Van A  "
             };
-            UserListViewModel page = new UserListViewModel { TotalCount = 20, PageSize = 10 };
+            UserSearchResultData page = new UserSearchResultData { TotalCount = 20 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.Search(model, 10)).Returns(page);
+            repository.Setup(repo => repo.Search("user01", "Nguyen Van A", null, 2, 10)).Returns(page);
             UserService service = new UserService(repository.Object);
 
             UserListViewModel result = service.Search(model);
@@ -48,26 +50,25 @@ namespace UserManagement.Tests
         {
             UserSearchViewModel model = new UserSearchViewModel { Page = 3 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            UserListViewModel emptyPage = new UserListViewModel { TotalCount = 20, PageSize = 10 };
-            UserListViewModel lastPage = new UserListViewModel { TotalCount = 20, PageSize = 10 };
-            repository.SetupSequence(repo => repo.Search(model, 10))
-                      .Returns(emptyPage)
-                      .Returns(lastPage);
+            UserSearchResultData emptyPage = new UserSearchResultData { TotalCount = 20 };
+            UserSearchResultData lastPage = new UserSearchResultData { TotalCount = 20 };
+            repository.Setup(repo => repo.Search(null, null, null, 3, 10)).Returns(emptyPage);
+            repository.Setup(repo => repo.Search(null, null, null, 2, 10)).Returns(lastPage);
             UserService service = new UserService(repository.Object);
 
             UserListViewModel result = service.Search(model);
 
             Assert.AreEqual(2, result.Page);
-            Assert.AreSame(lastPage, result);
+            Assert.AreEqual(lastPage.TotalCount, result.TotalCount);
         }
 
         [TestMethod]
         public void Search_NoUsers_ReturnsFirstPage()
         {
             UserSearchViewModel model = new UserSearchViewModel { Page = 2 };
-            UserListViewModel emptyPage = new UserListViewModel { PageSize = 10 };
+            UserSearchResultData emptyPage = new UserSearchResultData();
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.Search(model, 10)).Returns(emptyPage);
+            repository.Setup(repo => repo.Search(null, null, null, 2, 10)).Returns(emptyPage);
             UserService service = new UserService(repository.Object);
 
             UserListViewModel result = service.Search(model);
@@ -80,7 +81,7 @@ namespace UserManagement.Tests
         public void Update_ValidData_NormalizesInput()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
+            UserData user = new UserData { UserId = 2, Username = "user01" };
             repository.Setup(repo => repo.GetById(2)).Returns(user);
             UserService service = new UserService(repository.Object);
             UserEditViewModel model = new UserEditViewModel
@@ -90,7 +91,7 @@ namespace UserManagement.Tests
                 Email = "",
                 IsActive = true
             };
-            repository.Setup(repo => repo.Update(model)).Returns(true);
+            repository.Setup(repo => repo.Update(2, "New name", null, true)).Returns(true);
 
             service.Update(model, "USER01");
 
@@ -102,7 +103,7 @@ namespace UserManagement.Tests
         public void Update_DisableSelf_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
+            UserData user = new UserData { UserId = 2, Username = "user01" };
             repository.Setup(repo => repo.GetById(2)).Returns(user);
             UserService service = new UserService(repository.Object);
             UserEditViewModel model = new UserEditViewModel { UserId = 2, IsActive = false };
@@ -111,8 +112,8 @@ namespace UserManagement.Tests
                 () => service.Update(model, "USER01"));
 
             Assert.AreEqual(400, error.HttpStatusCode);
-            Assert.AreEqual(UserManagement.Web.Constants.ErrorMessages.CannotDeactivateOwnAccount, error.UserMessage);
-            Assert.AreEqual(UserManagement.Web.Constants.ErrorCode.CannotDeactivateOwnAccount, error.ErrorCode);
+            Assert.AreEqual(ErrorMessages.CannotDeactivateOwnAccount, error.UserMessage);
+            Assert.AreEqual(ErrorCode.CannotDeactivateOwnAccount, error.ErrorCode);
         }
 
         [TestMethod]
@@ -132,7 +133,7 @@ namespace UserManagement.Tests
             int userId = 99;
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetById(userId))
-                      .Returns((UserDetailsViewModel)null);
+                      .Returns((UserData)null);
 
             UserService service = new UserService(repository.Object);
 
@@ -144,7 +145,7 @@ namespace UserManagement.Tests
         [TestMethod]
         public void GetEdit_ExistingUser_ReturnsEditModel()
         {
-            UserDetailsViewModel user = new UserDetailsViewModel
+            UserData user = new UserData
             {
                 UserId = 2,
                 FullName = "Nguyen Van A",
@@ -180,7 +181,7 @@ namespace UserManagement.Tests
         {
             UserEditViewModel model = new UserEditViewModel { UserId = 99 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetById(model.UserId)).Returns((UserDetailsViewModel)null);
+            repository.Setup(repo => repo.GetById(model.UserId)).Returns((UserData)null);
             UserService service = new UserService(repository.Object);
 
             ApiException error = Assert.ThrowsException<ApiException>(
@@ -192,24 +193,26 @@ namespace UserManagement.Tests
         [TestMethod]
         public void Update_DisableOtherUser_Succeeds()
         {
-            UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
+            UserData user = new UserData { UserId = 2, Username = "user01" };
             UserEditViewModel model = new UserEditViewModel { UserId = user.UserId, IsActive = false };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetById(user.UserId)).Returns(user);
-            repository.Setup(repo => repo.Update(model)).Returns(true);
+            repository.Setup(repo => repo.Update(model.UserId, model.FullName, model.Email, model.IsActive)).Returns(true);
             UserService service = new UserService(repository.Object);
 
             service.Update(model, "admin");
+
+            repository.Verify(repo => repo.Update(2, null, null, false), Times.Once());
         }
 
         [TestMethod]
         public void Update_SaveFailed_ThrowsNotFound()
         {
-            UserDetailsViewModel user = new UserDetailsViewModel { UserId = 2, Username = "user01" };
+            UserData user = new UserData { UserId = 2, Username = "user01" };
             UserEditViewModel model = new UserEditViewModel { UserId = user.UserId, IsActive = true };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetById(user.UserId)).Returns(user);
-            repository.Setup(repo => repo.Update(model)).Returns(false);
+            repository.Setup(repo => repo.Update(model.UserId, model.FullName, model.Email, model.IsActive)).Returns(false);
             UserService service = new UserService(repository.Object);
 
             ApiException error = Assert.ThrowsException<ApiException>(

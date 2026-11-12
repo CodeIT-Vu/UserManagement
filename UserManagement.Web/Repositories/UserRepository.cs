@@ -2,13 +2,23 @@
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
+using UserManagement.Web.Exceptions;
 using UserManagement.Web.Models;
 using UserManagement.Web.Util;
 
 namespace UserManagement.Web.Repositories
 {
+    /// <summary>
+    /// Truy cập dữ liệu người dùng bằng Dapper và stored procedure.
+    /// </summary>
     public class UserRepository : IUserRepository
     {
+        private const int DuplicateKeyErrorNumber = 2601;
+        private const int UniqueConstraintViolationErrorNumber = 2627;
+
+        /// <summary>
+        /// Lấy dữ liệu tài khoản, gồm hash mật khẩu, để service xác thực.
+        /// </summary>
         public AppUser GetByUsername(string username)
         {
             string procedureName = "dbo.usp_AppUser_GetByUsername";
@@ -16,8 +26,6 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                connection.Open();
-
                 AppUser user = connection.QuerySingleOrDefault<AppUser>(
                     procedureName,
                     parameters,
@@ -27,6 +35,9 @@ namespace UserManagement.Web.Repositories
             }
         }
 
+        /// <summary>
+        /// Đọc tổng số kết quả và danh sách người dùng theo trang từ hai tập kết quả của proc.
+        /// </summary>
         public UserSearchResultData Search(string username, string fullName, bool? isActive, int page, int pageSize)
         {
             string procedureName = "dbo.usp_AppUser_Search";
@@ -45,8 +56,6 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                connection.Open();
-
                 using (SqlMapper.GridReader results = connection.QueryMultiple(
                     procedureName,
                     parameters,
@@ -67,8 +76,6 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                connection.Open();
-
                 UserData user = connection.QuerySingleOrDefault<UserData>(
                     procedureName,
                     parameters,
@@ -91,8 +98,6 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                connection.Open();
-
                 int rowsAffected = connection.ExecuteScalar<int>(
                     procedureName,
                     parameters,
@@ -117,9 +122,15 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                connection.Open();
-                connection.Execute(
-                    procedureName, parameters, commandType: CommandType.StoredProcedure);
+                try
+                {
+                    connection.Execute(
+                        procedureName, parameters, commandType: CommandType.StoredProcedure);
+                }
+                catch (SqlException exception) when (exception.Number == DuplicateKeyErrorNumber || exception.Number == UniqueConstraintViolationErrorNumber)
+                {
+                    throw new DuplicateUsernameException(exception);
+                }
             }
         }
 
@@ -136,9 +147,22 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                connection.Open();
                 int rowsAffected = connection.ExecuteScalar<int>(
                     procedureName, parameters, commandType: CommandType.StoredProcedure);
+                return rowsAffected == 1;
+            }
+        }
+
+        public bool IncreaseAuthVersion(int userId)
+        {
+            string procedureName = "dbo.usp_AppUser_IncreaseAuthVersion";
+            DynamicParameters parameters = new DynamicParameters(new { UserId = userId });
+
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
+            {
+                int rowsAffected = connection.ExecuteScalar<int>(
+                    procedureName, parameters, commandType: CommandType.StoredProcedure);
+
                 return rowsAffected == 1;
             }
         }

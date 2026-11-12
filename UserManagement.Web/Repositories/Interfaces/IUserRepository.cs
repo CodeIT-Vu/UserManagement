@@ -15,5 +15,7 @@ namespace UserManagement.Web.Repositories
         void Create(AppUser user);
 
         bool ChangePassword(int userId, byte[] newHash, byte[] newSalt, int iterations);
+
+        bool IncreaseAuthVersion(int userId);
     }
 }

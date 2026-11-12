@@ -1,6 +1,7 @@
 ﻿using System.Web.Mvc;
 using System.Web.Security;
 using UserManagement.Web.DTOs;
+using System.Web;
 
 namespace UserManagement.Web.Controllers
 {
@@ -8,7 +9,19 @@ namespace UserManagement.Web.Controllers
     {
         protected void SetLoginSessionInfo(CurrentUserDto user)
         {
-            FormsAuthentication.SetAuthCookie(user.Username, false);
+            HttpCookie cookie = FormsAuthentication.GetAuthCookie(user.Username, false);
+            FormsAuthenticationTicket ticket = FormsAuthentication.Decrypt(cookie.Value);
+            FormsAuthenticationTicket versionedTicket = new FormsAuthenticationTicket(
+                ticket.Version,
+                ticket.Name,
+                ticket.IssueDate,
+                ticket.Expiration,
+                ticket.IsPersistent,
+                user.AuthVersion.ToString(),
+                ticket.CookiePath);
+
+            cookie.Value = FormsAuthentication.Encrypt(versionedTicket);
+            Response.Cookies.Set(cookie);
         }
 
         protected void LoginSessionClear()

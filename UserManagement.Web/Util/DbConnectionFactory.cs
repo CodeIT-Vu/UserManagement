@@ -1,7 +1,5 @@
 ﻿using System.Configuration;
 using System.Data.SqlClient;
-using UserManagement.Web.Constants;
-using UserManagement.Web.Exceptions;
 
 namespace UserManagement.Web.Util
 {
@@ -18,11 +16,11 @@ namespace UserManagement.Web.Util
 
         private static string LoadConnectionString()
         {
-            var settings = ConfigurationManager.ConnectionStrings["UserManagementDb"];
+            ConnectionStringSettings settings = ConfigurationManager.ConnectionStrings["UserManagementDb"];
 
             if (settings == null || string.IsNullOrWhiteSpace(settings.ConnectionString))
             {
-                throw new ApiException(500, ErrorCode.DatabaseConnectionStringMissing, ErrorMessages.DatabaseConnectionStringMissing);
+                throw new ConfigurationErrorsException("Chuỗi kết nối cơ sở dữ liệu chưa được cấu hình hoặc đang để trống.");
             }
 
             return settings.ConnectionString;

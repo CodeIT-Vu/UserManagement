@@ -9,5 +9,7 @@
         public string FullName { get; set; }
 
         public string RoleName { get; set; }
+
+        public int AuthVersion { get; set; }
     }
 }

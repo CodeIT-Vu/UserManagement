@@ -17,7 +17,7 @@ namespace UserManagement.Web.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult Index(UserSearchViewModel model)
         {
             UserListViewModel result = _userService.Search(model);
@@ -26,7 +26,7 @@ namespace UserManagement.Web.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult Details(int id = 0)
         {
             UserDetailsViewModel user = _userService.GetDetails(id);
@@ -35,7 +35,7 @@ namespace UserManagement.Web.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult Edit(int id = 0)
         {
             UserEditViewModel model = _userService.GetEdit(id);
@@ -45,7 +45,7 @@ namespace UserManagement.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult Update(UserEditViewModel model)
         {
             _userService.Update(model, User.Identity.Name);

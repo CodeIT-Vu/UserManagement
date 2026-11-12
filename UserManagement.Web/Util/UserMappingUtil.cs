@@ -51,8 +51,10 @@ namespace UserManagement.Web.Util
                 UserId = user.UserId,
                 Username = user.Username,
                 FullName = user.FullName,
-                RoleName = user.RoleName
+                RoleName = user.RoleName,
+                AuthVersion = user.AuthVersion
             };
         }
+
     }
 }

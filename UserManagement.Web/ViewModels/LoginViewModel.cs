@@ -6,7 +6,7 @@ namespace UserManagement.Web.ViewModels
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
-        [StringLength(UserValidationLimits.UsernameMaxLength)]
+        [StringLength(UserValidationLimits.UsernameMaxLength, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự.")]
         [Display(Name = "Tên đăng nhập")]
         public string Username { get; set; }
 

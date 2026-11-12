@@ -227,7 +227,7 @@
     <None Include="Sql\04_DemoUsers.sql" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Filters\ValidateRequestAttribute.cs" />
+    <Compile Include="Filters\ValidateModelStateAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DTOs\CurrentUserDto.cs" />
@@ -243,6 +243,7 @@
     <Compile Include="Util\StringUtil.cs" />
     <Compile Include="Util\UserMappingUtil.cs" />
     <Compile Include="Util\PaginationUtil.cs" />
+    <Compile Include="Util\ErrorHandlingUtil.cs" />
     <Compile Include="Util\DbConnectionFactory.cs" />
     <Compile Include="Repositories\Interfaces\IUserRepository.cs" />
     <Compile Include="Services\Interfaces\IAuthService.cs" />
@@ -262,6 +263,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exceptions\BadRequestException.cs" />
+    <Compile Include="Exceptions\DuplicateUsernameException.cs" />
     <Compile Include="Exceptions\UnauthorizedException.cs" />
   </ItemGroup>
   <ItemGroup>

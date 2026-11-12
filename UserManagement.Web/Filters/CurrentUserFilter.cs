@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Principal;
+using System.Diagnostics;
 using System.Web.Mvc;
 using System.Web.Mvc.Filters;
 using System.Web.Security;
@@ -29,13 +30,17 @@ namespace UserManagement.Web.Filters
             }
 
             string username = principal.Identity.Name;
+            FormsIdentity identity = principal.Identity as FormsIdentity;
+            string ticketAuthVersion = identity == null ? null : identity.Ticket.UserData;
+
             CurrentUserDto user = _authService.FindActiveUser(username);
 
-            if (user == null)
+            if (user == null || user.AuthVersion <= 0 || user.AuthVersion.ToString() != ticketAuthVersion)
             {
                 FormsAuthentication.SignOut();
                 GenericIdentity anonymousIdentity = new GenericIdentity("");
                 filterContext.Principal = new GenericPrincipal(anonymousIdentity, Array.Empty<string>());
+                filterContext.HttpContext.Items.Remove("CurrentUser");
                 return;
             }
 
@@ -65,6 +70,9 @@ namespace UserManagement.Web.Filters
             string errorCode = isAuthenticated ? ErrorCode.AccessDenied : ErrorCode.AuthenticationRequired;
             string message = isAuthenticated ? ErrorMessages.AccessDenied : ErrorMessages.AuthenticationRequired;
 
+            string traceId = Guid.NewGuid().ToString("N");
+            Trace.TraceWarning("[TraceId:{0}] HTTP {1}: {2}", traceId, statusCode, errorCode);
+
             filterContext.HttpContext.Response.StatusCode = statusCode;
             filterContext.HttpContext.Response.TrySkipIisCustomErrors = true;
             filterContext.HttpContext.Response.SuppressFormsAuthenticationRedirect = true;
@@ -74,7 +82,6 @@ namespace UserManagement.Web.Filters
                 ApiErrorResponse response = new ApiErrorResponse();
                 response.Code = errorCode;
                 response.Message = message;
-                response.TraceId = Guid.NewGuid().ToString("N");
 
                 JsonResult result = new JsonResult();
                 result.Data = response;

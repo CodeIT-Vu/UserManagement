@@ -2,7 +2,6 @@
 
 namespace UserManagement.Web.Services
 {
-    // ViewModel input must pass MVC ModelState validation before calling the service.
     public interface IUserService
     {
         UserListViewModel Search(UserSearchViewModel model);

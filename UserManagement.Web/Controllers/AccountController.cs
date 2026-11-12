@@ -29,7 +29,7 @@ namespace UserManagement.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult Login(LoginViewModel model)
         {
             CurrentUserDto user = _authService.Authenticate(model);
@@ -48,6 +48,8 @@ namespace UserManagement.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Logout()
         {
+            CurrentUserDto user = (CurrentUserDto)HttpContext.Items["CurrentUser"];
+            _authService.Logout(user.UserId);
             LoginSessionClear();
 
             string loginUrl = Url.Action("Login", "Account");
@@ -70,7 +72,7 @@ namespace UserManagement.Web.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult Register(RegisterViewModel model)
         {
             _authService.Register(model);
@@ -91,7 +93,7 @@ namespace UserManagement.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [ValidateRequest]
+        [ValidateModelStateAttribute]
         public ActionResult ChangePassword(ChangePasswordViewModel model)
         {
             _authService.ChangePassword(model, User.Identity.Name);

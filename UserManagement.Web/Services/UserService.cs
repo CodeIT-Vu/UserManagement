@@ -8,6 +8,9 @@ using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Services
 {
+    /// <summary>
+    /// Xử lý nghiệp vụ quản lý người dùng và chuyển dữ liệu sang ViewModel.
+    /// </summary>
     public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
@@ -18,6 +21,9 @@ namespace UserManagement.Web.Services
             _userRepository = userRepository;
         }
 
+        /// <summary>
+        /// Chuẩn hóa điều kiện tìm kiếm và điều chỉnh phân trang theo tổng số kết quả.
+        /// </summary>
         public UserListViewModel Search(UserSearchViewModel model)
         {
             if (model == null)
@@ -72,6 +78,9 @@ namespace UserManagement.Web.Services
             return UserMappingUtil.ToEditViewModel(GetRequiredUser(id));
         }
 
+        /// <summary>
+        /// Cập nhật hồ sơ và ngăn người dùng tự vô hiệu hóa tài khoản của mình.
+        /// </summary>
         public void Update(UserEditViewModel model, string currentUsername)
         {
             if (model == null)

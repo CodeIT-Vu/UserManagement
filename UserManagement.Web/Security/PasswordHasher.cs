@@ -70,7 +70,6 @@ namespace UserManagement.Web.Security
 
             for (int i = 0; i < storedHash.Length; i++)
             {
-                // Keep any difference found; compare every byte before returning.
                 difference |= storedHash[i] ^ newHash[i];
             }
 

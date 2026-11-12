@@ -3,12 +3,13 @@ using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Services
 {
-    // ViewModel input must pass MVC ModelState validation before calling the service.
     public interface IAuthService
     {
         CurrentUserDto Authenticate(LoginViewModel model);
 
         CurrentUserDto FindActiveUser(string username);
+
+        void Logout(int userId);
 
         void Register(RegisterViewModel model);
 

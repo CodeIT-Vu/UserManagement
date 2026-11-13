@@ -1,5 +1,8 @@
 ﻿namespace UserManagement.Web.DTOs
 {
+    /// <summary>
+    /// Chứa thông tin người dùng hiện tại, không chứa dữ liệu mật khẩu.
+    /// </summary>
     public class CurrentUserDto
     {
         public int UserId { get; set; }

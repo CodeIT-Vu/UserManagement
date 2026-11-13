@@ -3,6 +3,9 @@ using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
+    /// <summary>
+    /// Chứa dữ liệu và quy tắc validation của form đổi mật khẩu.
+    /// </summary>
     public class ChangePasswordViewModel
     {
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu hiện tại.")]

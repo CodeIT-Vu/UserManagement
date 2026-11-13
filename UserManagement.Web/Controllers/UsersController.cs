@@ -6,15 +6,24 @@ using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Web.Controllers
 {
+    /// <summary>
+    /// Tiếp nhận yêu cầu tìm kiếm, xem và sửa người dùng của Admin.
+    /// </summary>
     public class UsersController : BaseController
     {
         private readonly IUserService _userService;
 
+        /// <summary>
+        /// Nhận service quản lý người dùng qua constructor.
+        /// </summary>
         public UsersController(IUserService userService)
         {
             _userService = userService;
         }
 
+        /// <summary>
+        /// Tìm kiếm người dùng và hiển thị danh sách theo trang.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpGet]
         [ValidateModelStateAttribute]
@@ -24,6 +33,9 @@ namespace UserManagement.Web.Controllers
             return View(result);
         }
 
+        /// <summary>
+        /// Lấy thông tin người dùng để hiển thị trang chi tiết.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpGet]
         [ValidateModelStateAttribute]
@@ -33,6 +45,9 @@ namespace UserManagement.Web.Controllers
             return View(user);
         }
 
+        /// <summary>
+        /// Lấy dữ liệu người dùng để hiển thị form chỉnh sửa.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpGet]
         [ValidateModelStateAttribute]
@@ -42,6 +57,9 @@ namespace UserManagement.Web.Controllers
             return View(model);
         }
 
+        /// <summary>
+        /// Cập nhật người dùng và trả URL đến trang chi tiết.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]

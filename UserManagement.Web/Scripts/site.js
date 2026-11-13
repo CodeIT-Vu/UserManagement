@@ -1,6 +1,7 @@
 ﻿const $ = window.jQuery;
 const defaultErrorMessage = "Có lỗi xảy ra, vui lòng thử lại.";
 
+// Hiển thị lỗi chung, lỗi từng trường hoặc chuyển về trang đăng nhập khi hết phiên.
 function showFormErrors(form, response) {
     const errorBox = form.find("[data-form-error]");
     let message = defaultErrorMessage;
@@ -52,6 +53,7 @@ function showFormErrors(form, response) {
     errorBox.removeClass("d-none");
 }
 
+// Gửi form bằng AJAX, xử lý kết quả và khóa nút gửi trong lúc chờ.
 function submitForm(form, data) {
     const submitButton = form.find(":submit");
     const errorBox = form.find("[data-form-error]");
@@ -80,6 +82,7 @@ function submitForm(form, data) {
     });
 }
 
+// Dùng chung sự kiện submit; form đăng xuất không cần validation.
 $("#loginForm, #logoutForm, #editUserForm, #registerForm, #changePasswordForm")
     .on("submit", function (event) {
         event.preventDefault();

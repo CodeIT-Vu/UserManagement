@@ -2,6 +2,9 @@
 
 namespace UserManagement.Web.Models
 {
+    /// <summary>
+    /// Chứa thông báo lỗi, lỗi từng trường và mã tra cứu khi cần.
+    /// </summary>
     public class ApiErrorResponse
     {
         public bool Success

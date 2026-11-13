@@ -3,6 +3,9 @@ using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
+    /// <summary>
+    /// Chứa điều kiện tìm kiếm và số trang người dùng yêu cầu.
+    /// </summary>
     public class UserSearchViewModel
     {
         [StringLength(UserValidationLimits.UsernameMaxLength, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự.")]

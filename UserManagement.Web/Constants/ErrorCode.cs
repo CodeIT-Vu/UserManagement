@@ -1,5 +1,8 @@
 ﻿namespace UserManagement.Web.Constants
 {
+    /// <summary>
+    /// Khai báo mã lỗi dùng chung cho phản hồi của ứng dụng.
+    /// </summary>
     public static class ErrorCode
     {
         public const string AuthenticationRequired = "AUTH_REQUIRED";

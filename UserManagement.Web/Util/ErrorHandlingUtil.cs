@@ -10,11 +10,18 @@ using UserManagement.Web.Models;
 
 namespace UserManagement.Web.Util
 {
+    /// <summary>
+    /// Chuẩn hóa phản hồi lỗi và ghi log dùng chung cho MVC và Application_Error.
+    /// </summary>
     public static class ErrorHandlingUtil
     {
+        /// <summary>
+        /// Phân loại exception, tạo phản hồi an toàn và ghi chi tiết lỗi vào log.
+        /// </summary>
         public static ApiErrorResponse CreateErrorResponse(Exception exception, out int statusCode)
         {
             Exception error = exception;
+            // Bỏ lớp exception bao ngoài của ASP.NET để phân loại đúng lỗi gốc.
             while (error is HttpUnhandledException && error.InnerException != null)
             {
                 error = error.InnerException;
@@ -55,6 +62,7 @@ namespace UserManagement.Web.Util
                 response.Errors = validationException.Errors;
             }
 
+            // Chỉ trả mã tra cứu cho lỗi hệ thống; lỗi 4xx vẫn được ghi log.
             if (statusCode >= 500)
             {
                 response.TraceId = traceId;
@@ -64,6 +72,9 @@ namespace UserManagement.Web.Util
             return response;
         }
 
+        /// <summary>
+        /// Đặt mã HTTP, UTF-8 và giữ phản hồi lỗi khỏi bị IIS hoặc Forms Authentication thay thế.
+        /// </summary>
         public static void PrepareResponse(HttpResponseBase response, int statusCode)
         {
             response.Clear();
@@ -73,6 +84,9 @@ namespace UserManagement.Web.Util
             response.ContentEncoding = Encoding.UTF8;
         }
 
+        /// <summary>
+        /// Ghi JSON hoặc HTML đơn giản cho lỗi ngoài luồng xử lý MVC.
+        /// </summary>
         public static void WriteApplicationError(HttpContextBase context, Exception exception)
         {
             int statusCode;
@@ -89,6 +103,7 @@ namespace UserManagement.Web.Util
             }
             else
             {
+                // Ghi HTML trực tiếp và mã hóa nội dung, không gọi lại routing hoặc Razor.
                 string message = HttpUtility.HtmlEncode(error.Message);
                 string traceIdHtml = "";
                 if (error.TraceId != null)

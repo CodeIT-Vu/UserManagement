@@ -1,5 +1,8 @@
 ﻿namespace UserManagement.Web.Models
 {
+    /// <summary>
+    /// Chứa dữ liệu hồ sơ người dùng đọc từ repository.
+    /// </summary>
     public class UserData
     {
         public int UserId { get; set; }

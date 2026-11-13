@@ -3,6 +3,9 @@ using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
+    /// <summary>
+    /// Chứa dữ liệu và quy tắc validation của form đăng nhập.
+    /// </summary>
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]

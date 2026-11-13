@@ -4,6 +4,9 @@ using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.Security
 {
+    /// <summary>
+    /// Tạo và kiểm tra hash mật khẩu bằng PBKDF2-SHA256.
+    /// </summary>
     public static class PasswordHasher
     {
         public const int Iterations = 600000;
@@ -11,6 +14,9 @@ namespace UserManagement.Web.Security
         private const int HashSizeInBytes = 32;
         private const int MinimumAcceptedIterations = 100000;
 
+        /// <summary>
+        /// Tạo salt ngẫu nhiên và băm mật khẩu bằng PBKDF2-SHA256.
+        /// </summary>
         public static PasswordHashResult HashPassword(string password)
         {
             if (string.IsNullOrEmpty(password))
@@ -21,6 +27,7 @@ namespace UserManagement.Web.Security
             byte[] salt = new byte[SaltSizeInBytes];
             byte[] hash;
 
+            // Mỗi lần băm dùng salt ngẫu nhiên riêng.
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(salt);
@@ -44,6 +51,9 @@ namespace UserManagement.Web.Security
             return result;
         }
 
+        /// <summary>
+        /// Băm lại mật khẩu với tham số đã lưu rồi so sánh toàn bộ hash.
+        /// </summary>
         public static bool VerifyPassword(
             string password,
             byte[] storedHash,
@@ -68,6 +78,7 @@ namespace UserManagement.Web.Security
 
             int difference = 0;
 
+            // So sánh đủ các byte, không dừng sớm khi gặp byte khác nhau.
             for (int i = 0; i < storedHash.Length; i++)
             {
                 difference |= storedHash[i] ^ newHash[i];

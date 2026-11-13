@@ -1,5 +1,8 @@
 ﻿namespace UserManagement.Web.Models
 {
+    /// <summary>
+    /// Chứa dữ liệu tài khoản và mật khẩu đã băm để xác thực nội bộ.
+    /// </summary>
     public class AppUser
     {
         public int UserId { get; set; }

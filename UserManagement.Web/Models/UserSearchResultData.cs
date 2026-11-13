@@ -2,6 +2,9 @@
 
 namespace UserManagement.Web.Models
 {
+    /// <summary>
+    /// Chứa tổng số kết quả và danh sách người dùng của một trang.
+    /// </summary>
     public class UserSearchResultData
     {
         public int TotalCount { get; set; }

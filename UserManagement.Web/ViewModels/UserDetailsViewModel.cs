@@ -1,5 +1,8 @@
 ﻿namespace UserManagement.Web.ViewModels
 {
+    /// <summary>
+    /// Chứa thông tin hiển thị trên trang chi tiết người dùng.
+    /// </summary>
     public class UserDetailsViewModel
     {
         public int UserId { get; set; }

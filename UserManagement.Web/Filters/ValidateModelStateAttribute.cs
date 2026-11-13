@@ -5,8 +5,14 @@ using UserManagement.Web.Exceptions;
 
 namespace UserManagement.Web.Filters
 {
+    /// <summary>
+    /// Chặn action khi dữ liệu đầu vào không hợp lệ.
+    /// </summary>
     public class ValidateModelStateAttribute : ActionFilterAttribute
     {
+        /// <summary>
+        /// Gom lỗi ModelState theo trường và dừng action nếu dữ liệu không hợp lệ.
+        /// </summary>
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             ModelStateDictionary modelState = filterContext.Controller.ViewData.ModelState;
@@ -17,6 +23,7 @@ namespace UserManagement.Web.Filters
 
             Dictionary<string, string[]> errors = new Dictionary<string, string[]>();
 
+            // Giữ tên trường để trình duyệt đặt lỗi cạnh đúng ô nhập liệu.
             foreach (KeyValuePair<string, ModelState> field in modelState)
             {
                 List<string> messages = new List<string>();

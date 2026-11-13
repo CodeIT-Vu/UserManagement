@@ -11,9 +11,15 @@ using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Tests
 {
+    /// <summary>
+    /// Kiểm tra nghiệp vụ xác thực, đăng ký, đăng xuất và đổi mật khẩu.
+    /// </summary>
     [TestClass]
     public class AuthServiceTests
     {
+        /// <summary>
+        /// Đăng nhập đúng mật khẩu trả về thông tin người dùng.
+        /// </summary>
         [TestMethod]
         public void Authenticate_CorrectPassword_ReturnsUser()
         {
@@ -33,6 +39,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(user.Username, result.Username);
         }
 
+        /// <summary>
+        /// Đăng nhập sai mật khẩu báo lỗi xác thực.
+        /// </summary>
         [TestMethod]
         public void Authenticate_WrongPassword_ThrowsUnauthorized()
         {
@@ -53,6 +62,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(ErrorCode.InvalidLogin, error.ErrorCode);
         }
 
+        /// <summary>
+        /// Đăng nhập với tài khoản không tồn tại báo lỗi xác thực.
+        /// </summary>
         [TestMethod]
         public void Authenticate_UserNotFound_ThrowsUnauthorized()
         {
@@ -72,6 +84,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(ErrorCode.InvalidLogin, error.ErrorCode);
         }
 
+        /// <summary>
+        /// Đăng nhập với tài khoản bị khóa báo lỗi xác thực.
+        /// </summary>
         [TestMethod]
         public void Authenticate_InactiveUser_ThrowsUnauthorized()
         {
@@ -92,6 +107,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(ErrorCode.InvalidLogin, error.ErrorCode);
         }
 
+        /// <summary>
+        /// Tìm tài khoản còn hoạt động trả về thông tin người dùng.
+        /// </summary>
         [TestMethod]
         public void FindActiveUser_ActiveUser_ReturnsUser()
         {
@@ -107,6 +125,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(user.Username, result.Username);
         }
 
+        /// <summary>
+        /// Tìm tài khoản không tồn tại trả về null.
+        /// </summary>
         [TestMethod]
         public void FindActiveUser_UserNotFound_ReturnsNull()
         {
@@ -119,6 +140,9 @@ namespace UserManagement.Tests
             Assert.IsNull(result);
         }
 
+        /// <summary>
+        /// Đăng ký hợp lệ chuẩn hóa dữ liệu và gọi tạo tài khoản một lần.
+        /// </summary>
         [TestMethod]
         public void Register_ValidData_CreatesUser()
         {
@@ -142,6 +166,9 @@ namespace UserManagement.Tests
             repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Once());
         }
 
+        /// <summary>
+        /// Tên đăng nhập đã tồn tại bị từ chối trước khi tạo tài khoản.
+        /// </summary>
         [TestMethod]
         public void Register_DuplicateUsername_ThrowsBadRequest()
         {
@@ -163,11 +190,15 @@ namespace UserManagement.Tests
             repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Never());
         }
 
+        /// <summary>
+        /// Trùng tên ngay lúc lưu được chuyển thành lỗi nghiệp vụ HTTP 400.
+        /// </summary>
         [TestMethod]
         public void Register_UsernameTakenDuringCreate_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("newuser")).Returns((AppUser)null);
+            // Giả lập tên còn trống khi tra cứu nhưng bị trùng ngay lúc lưu.
             repository.Setup(repo => repo.Create(It.IsAny<AppUser>()))
                 .Throws(new DuplicateUsernameException());
             AuthService service = new AuthService(repository.Object);
@@ -187,6 +218,9 @@ namespace UserManagement.Tests
             repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Once());
         }
 
+        /// <summary>
+        /// Đăng ký thiếu tên đăng nhập báo lỗi và không tạo tài khoản.
+        /// </summary>
         [TestMethod]
         public void Register_EmptyUsername_ThrowsBadRequest()
         {
@@ -206,6 +240,9 @@ namespace UserManagement.Tests
             repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Never());
         }
 
+        /// <summary>
+        /// Đúng mật khẩu hiện tại thì gọi cập nhật mật khẩu một lần.
+        /// </summary>
         [TestMethod]
         public void ChangePassword_CorrectCurrentPassword_UpdatesPassword()
         {
@@ -227,6 +264,9 @@ namespace UserManagement.Tests
                 1, It.IsAny<byte[]>(), It.IsAny<byte[]>(), PasswordHasher.Iterations), Times.Once());
         }
 
+        /// <summary>
+        /// Sai mật khẩu hiện tại báo lỗi và không cập nhật mật khẩu.
+        /// </summary>
         [TestMethod]
         public void ChangePassword_WrongCurrentPassword_ThrowsBadRequest()
         {
@@ -248,6 +288,9 @@ namespace UserManagement.Tests
                 1, It.IsAny<byte[]>(), It.IsAny<byte[]>(), PasswordHasher.Iterations), Times.Never());
         }
 
+        /// <summary>
+        /// Đổi mật khẩu cho tài khoản không tồn tại báo lỗi xác thực.
+        /// </summary>
         [TestMethod]
         public void ChangePassword_UserNotFound_ThrowsUnauthorized()
         {
@@ -266,6 +309,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(401, error.HttpStatusCode);
         }
 
+        /// <summary>
+        /// Đăng xuất gọi tăng phiên bản xác thực của đúng tài khoản.
+        /// </summary>
         [TestMethod]
         public void Logout_ExistingUser_IncreasesAuthVersion()
         {
@@ -278,6 +324,9 @@ namespace UserManagement.Tests
             repository.Verify(repo => repo.IncreaseAuthVersion(1), Times.Once());
         }
 
+        /// <summary>
+        /// Đăng xuất không cập nhật được tài khoản báo lỗi xác thực.
+        /// </summary>
         [TestMethod]
         public void Logout_UserNotFound_ThrowsUnauthorized()
         {
@@ -292,6 +341,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(ErrorCode.AuthenticationRequired, error.ErrorCode);
         }
 
+        /// <summary>
+        /// Tạo tài khoản hoạt động với hash mật khẩu thật dùng trong test.
+        /// </summary>
         private static AppUser CreateActiveUser()
         {
             PasswordHashResult passwordHash = PasswordHasher.HashPassword("Password123!");

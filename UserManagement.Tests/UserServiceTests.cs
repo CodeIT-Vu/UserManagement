@@ -9,9 +9,15 @@ using UserManagement.Web.ViewModels;
 
 namespace UserManagement.Tests
 {
+    /// <summary>
+    /// Kiểm tra nghiệp vụ tìm kiếm, xem và cập nhật người dùng.
+    /// </summary>
     [TestClass]
     public class UserServiceTests
     {
+        /// <summary>
+        /// Tìm trang hai giữ đúng số trang và chuẩn hóa bộ lọc.
+        /// </summary>
         [TestMethod]
         public void Search_PageTwo_ReturnsPageTwoAndCleanFilters()
         {
@@ -33,6 +39,9 @@ namespace UserManagement.Tests
             Assert.AreEqual("Nguyen Van A", result.Search.FullName);
         }
 
+        /// <summary>
+        /// Tìm kiếm với model null báo lỗi HTTP 400.
+        /// </summary>
         [TestMethod]
         public void Search_NullModel_ThrowsBadRequest()
         {
@@ -45,6 +54,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(400, error.HttpStatusCode);
         }
 
+        /// <summary>
+        /// Số trang vượt giới hạn được điều chỉnh về trang cuối.
+        /// </summary>
         [TestMethod]
         public void Search_PageTooLarge_ReturnsLastPage()
         {
@@ -52,6 +64,7 @@ namespace UserManagement.Tests
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             UserSearchResultData emptyPage = new UserSearchResultData { TotalCount = 20 };
             UserSearchResultData lastPage = new UserSearchResultData { TotalCount = 20 };
+            // Trang ba vượt giới hạn; service cần đọc lại trang hai là trang cuối.
             repository.Setup(repo => repo.Search(null, null, null, 3, 10)).Returns(emptyPage);
             repository.Setup(repo => repo.Search(null, null, null, 2, 10)).Returns(lastPage);
             UserService service = new UserService(repository.Object);
@@ -62,6 +75,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(lastPage.TotalCount, result.TotalCount);
         }
 
+        /// <summary>
+        /// Không có kết quả thì trả về trang đầu với tổng số bằng không.
+        /// </summary>
         [TestMethod]
         public void Search_NoUsers_ReturnsFirstPage()
         {
@@ -77,6 +93,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(0, result.TotalCount);
         }
 
+        /// <summary>
+        /// Cập nhật hợp lệ cắt khoảng trắng và đổi email rỗng thành null.
+        /// </summary>
         [TestMethod]
         public void Update_ValidData_NormalizesInput()
         {
@@ -99,6 +118,9 @@ namespace UserManagement.Tests
             Assert.IsNull(model.Email);
         }
 
+        /// <summary>
+        /// Người dùng không được tự vô hiệu hóa tài khoản đang đăng nhập.
+        /// </summary>
         [TestMethod]
         public void Update_DisableSelf_ThrowsBadRequest()
         {
@@ -116,6 +138,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(ErrorCode.CannotDeactivateOwnAccount, error.ErrorCode);
         }
 
+        /// <summary>
+        /// Xem chi tiết với ID không hợp lệ báo lỗi HTTP 404.
+        /// </summary>
         [TestMethod]
         public void GetDetails_InvalidId_ThrowsNotFound()
         {
@@ -127,6 +152,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(404, error.HttpStatusCode);
         }
 
+        /// <summary>
+        /// Xem chi tiết người dùng không tồn tại báo lỗi HTTP 404.
+        /// </summary>
         [TestMethod]
         public void GetDetails_UserNotFound_ThrowsNotFound()
         {
@@ -142,6 +170,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(404, error.HttpStatusCode);
         }
 
+        /// <summary>
+        /// Người dùng tồn tại được chuyển đúng dữ liệu sang form chỉnh sửa.
+        /// </summary>
         [TestMethod]
         public void GetEdit_ExistingUser_ReturnsEditModel()
         {
@@ -164,6 +195,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(user.IsActive, result.IsActive);
         }
 
+        /// <summary>
+        /// Cập nhật với model null báo lỗi HTTP 400.
+        /// </summary>
         [TestMethod]
         public void Update_NullModel_ThrowsBadRequest()
         {
@@ -176,6 +210,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(400, error.HttpStatusCode);
         }
 
+        /// <summary>
+        /// Cập nhật người dùng không tồn tại báo lỗi HTTP 404.
+        /// </summary>
         [TestMethod]
         public void Update_UserNotFound_ThrowsNotFound()
         {
@@ -190,6 +227,9 @@ namespace UserManagement.Tests
             Assert.AreEqual(404, error.HttpStatusCode);
         }
 
+        /// <summary>
+        /// Cho phép vô hiệu hóa tài khoản khác với tài khoản đang đăng nhập.
+        /// </summary>
         [TestMethod]
         public void Update_DisableOtherUser_Succeeds()
         {
@@ -205,6 +245,9 @@ namespace UserManagement.Tests
             repository.Verify(repo => repo.Update(2, null, null, false), Times.Once());
         }
 
+        /// <summary>
+        /// Không cập nhật được dòng dữ liệu thì báo lỗi HTTP 404.
+        /// </summary>
         [TestMethod]
         public void Update_SaveFailed_ThrowsNotFound()
         {

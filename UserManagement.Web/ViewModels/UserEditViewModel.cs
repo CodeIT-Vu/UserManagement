@@ -3,6 +3,9 @@ using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.ViewModels
 {
+    /// <summary>
+    /// Chứa dữ liệu và quy tắc validation của form sửa người dùng.
+    /// </summary>
     public class UserEditViewModel
     {
         [Range(1, int.MaxValue, ErrorMessage = "Mã người dùng không hợp lệ.")]

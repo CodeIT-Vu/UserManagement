@@ -7,8 +7,14 @@ using System.Web.Routing;
 
 namespace UserManagement.Web
 {
+    /// <summary>
+    /// Cấu hình đường dẫn đến controller và action.
+    /// </summary>
     public class RouteConfig
     {
+        /// <summary>
+        /// Bỏ qua tài nguyên axd và đăng ký route MVC mặc định.
+        /// </summary>
         public static void RegisterRoutes(RouteCollection routes)
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");

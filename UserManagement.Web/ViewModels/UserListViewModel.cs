@@ -2,6 +2,9 @@
 
 namespace UserManagement.Web.ViewModels
 {
+    /// <summary>
+    /// Chứa danh sách người dùng, bộ lọc và thông tin phân trang.
+    /// </summary>
     public class UserListViewModel
     {
         public UserSearchViewModel Search { get; set; }

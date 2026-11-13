@@ -69,6 +69,9 @@ namespace UserManagement.Web.Repositories
             }
         }
 
+        /// <summary>
+        /// Lấy hồ sơ người dùng theo ID, không lấy dữ liệu mật khẩu.
+        /// </summary>
         public UserData GetById(int id)
         {
             string procedureName = "dbo.usp_AppUser_GetById";
@@ -85,6 +88,9 @@ namespace UserManagement.Web.Repositories
             }
         }
 
+        /// <summary>
+        /// Cập nhật hồ sơ và trả kết quả dựa trên số dòng được cập nhật.
+        /// </summary>
         public bool Update(int userId, string fullName, string email, bool isActive)
         {
             string procedureName = "dbo.usp_AppUser_Update";
@@ -107,6 +113,9 @@ namespace UserManagement.Web.Repositories
             }
         }
 
+        /// <summary>
+        /// Tạo tài khoản và chuyển lỗi trùng khóa SQL thành lỗi trùng tên đăng nhập.
+        /// </summary>
         public void Create(AppUser user)
         {
             string procedureName = "dbo.usp_AppUser_Create";
@@ -134,6 +143,9 @@ namespace UserManagement.Web.Repositories
             }
         }
 
+        /// <summary>
+        /// Lưu mật khẩu mới và tăng AuthVersion trong cùng stored procedure.
+        /// </summary>
         public bool ChangePassword(int userId, byte[] newHash, byte[] newSalt, int iterations)
         {
             string procedureName = "dbo.usp_AppUser_ChangePassword";
@@ -153,6 +165,9 @@ namespace UserManagement.Web.Repositories
             }
         }
 
+        /// <summary>
+        /// Tăng phiên bản xác thực của tài khoản và kiểm tra số dòng được cập nhật.
+        /// </summary>
         public bool IncreaseAuthVersion(int userId)
         {
             string procedureName = "dbo.usp_AppUser_IncreaseAuthVersion";

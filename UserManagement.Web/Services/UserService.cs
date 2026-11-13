@@ -16,6 +16,9 @@ namespace UserManagement.Web.Services
         private readonly IUserRepository _userRepository;
         private const int DefaultPageSize = 10;
 
+        /// <summary>
+        /// Nhận repository người dùng qua constructor.
+        /// </summary>
         public UserService(IUserRepository userRepository)
         {
             _userRepository = userRepository;
@@ -37,6 +40,7 @@ namespace UserManagement.Web.Services
             UserSearchResultData data = _userRepository.Search(model.Username, model.FullName, model.IsActive, model.Page, DefaultPageSize);
             int totalPages = PaginationUtil.CalculateTotalPages(data.TotalCount, DefaultPageSize);
 
+            // Đọc lại trang cuối nếu trang yêu cầu vượt quá số trang hiện có.
             if (totalPages > 0 && model.Page > totalPages)
             {
                 model.Page = totalPages;
@@ -52,11 +56,17 @@ namespace UserManagement.Web.Services
             return UserMappingUtil.ToListViewModel(data, model, model.Page, DefaultPageSize, totalPages);
         }
 
+        /// <summary>
+        /// Lấy người dùng bắt buộc tồn tại và chuyển sang dữ liệu trang chi tiết.
+        /// </summary>
         public UserDetailsViewModel GetDetails(int id)
         {
             return UserMappingUtil.ToDetailsViewModel(GetRequiredUser(id));
         }
 
+        /// <summary>
+        /// Kiểm tra ID và báo lỗi 404 nếu người dùng không tồn tại.
+        /// </summary>
         private UserData GetRequiredUser(int id)
         {
             if (id <= 0)
@@ -73,6 +83,9 @@ namespace UserManagement.Web.Services
             return user;
         }
 
+        /// <summary>
+        /// Lấy người dùng bắt buộc tồn tại và chuyển sang dữ liệu form chỉnh sửa.
+        /// </summary>
         public UserEditViewModel GetEdit(int id)
         {
             return UserMappingUtil.ToEditViewModel(GetRequiredUser(id));

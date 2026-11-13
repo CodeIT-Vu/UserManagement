@@ -1,5 +1,8 @@
 ﻿namespace UserManagement.Web.Constants
 {
+    /// <summary>
+    /// Khai báo thông báo lỗi tiếng Việt hiển thị cho người dùng.
+    /// </summary>
     public static class ErrorMessages
     {
         public const string PageNotFound = "Không tìm thấy trang.";

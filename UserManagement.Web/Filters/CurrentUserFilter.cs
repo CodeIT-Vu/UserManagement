@@ -12,15 +12,24 @@ using UserManagement.Web.Util;
 
 namespace UserManagement.Web.Filters
 {
+    /// <summary>
+    /// Kiểm tra người dùng, phiên bản đăng nhập và phản hồi khi bị từ chối truy cập.
+    /// </summary>
     public class CurrentUserFilter : IAuthenticationFilter
     {
         private readonly IAuthService _authService;
 
+        /// <summary>
+        /// Nhận service xác thực qua constructor.
+        /// </summary>
         public CurrentUserFilter(IAuthService authService)
         {
             _authService = authService;
         }
 
+        /// <summary>
+        /// Kiểm tra phiên bản ticket và gắn người dùng cùng quyền vào request.
+        /// </summary>
         public void OnAuthentication(AuthenticationContext filterContext)
         {
             IPrincipal principal = filterContext.Principal;
@@ -35,6 +44,7 @@ namespace UserManagement.Web.Filters
 
             CurrentUserDto user = _authService.FindActiveUser(username);
 
+            // Ticket cũ bị từ chối khi tài khoản bị khóa, bị xóa hoặc đã đổi phiên bản.
             if (user == null || user.AuthVersion <= 0 || user.AuthVersion.ToString() != ticketAuthVersion)
             {
                 FormsAuthentication.SignOut();
@@ -50,6 +60,9 @@ namespace UserManagement.Web.Filters
             filterContext.HttpContext.Items["CurrentUser"] = user;
         }
 
+        /// <summary>
+        /// Trả lỗi 401 hoặc 403 phù hợp với trạng thái đăng nhập và loại request.
+        /// </summary>
         public void OnAuthenticationChallenge(AuthenticationChallengeContext filterContext)
         {
             HttpUnauthorizedResult unauthorizedResult = filterContext.Result as HttpUnauthorizedResult;
@@ -61,6 +74,7 @@ namespace UserManagement.Web.Filters
             bool isAuthenticated = filterContext.HttpContext.User.Identity.IsAuthenticated;
             bool isJsonRequest = HttpRequestUtil.IsJsonRequest(filterContext.HttpContext.Request);
 
+            // Request trang thường chưa đăng nhập được Forms Authentication chuyển về trang login.
             if (!isAuthenticated && !isJsonRequest)
             {
                 return;

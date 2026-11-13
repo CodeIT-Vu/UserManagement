@@ -20,6 +20,9 @@ namespace UserManagement.Web.Services
         private static readonly PasswordHashResult DummyPasswordHash = PasswordHasher.HashPassword("DummyLoginPassword");
         private readonly IUserRepository _userRepository;
 
+        /// <summary>
+        /// Nhận repository người dùng qua constructor.
+        /// </summary>
         public AuthService(IUserRepository repository)
         {
             _userRepository = repository;
@@ -37,6 +40,7 @@ namespace UserManagement.Web.Services
             string username = StringUtil.CleanText(model.Username);
             AppUser user = _userRepository.GetByUsername(username);
 
+            // Tài khoản thiếu hoặc bị khóa vẫn kiểm tra hash giả để hạn chế chênh lệch thời gian.
             bool canAuthenticate = user != null && user.IsActive;
             byte[] hash = canAuthenticate ? user.PasswordHash : DummyPasswordHash.Hash;
             byte[] salt = canAuthenticate ? user.PasswordSalt : DummyPasswordHash.Salt;
@@ -56,12 +60,18 @@ namespace UserManagement.Web.Services
             return UserMappingUtil.ToCurrentUserDto(user);
         }
 
+        /// <summary>
+        /// Lấy thông tin xác thực an toàn nếu tài khoản còn hoạt động.
+        /// </summary>
         public CurrentUserDto FindActiveUser(string username)
         {
             AppUser user = _userRepository.GetByUsername(username);
             return user == null || !user.IsActive ? null : UserMappingUtil.ToCurrentUserDto(user);
         }
 
+        /// <summary>
+        /// Tăng AuthVersion để thu hồi các ticket hiện tại của cùng tài khoản.
+        /// </summary>
         public void Logout(int userId)
         {
             bool updated = _userRepository.IncreaseAuthVersion(userId);
@@ -109,6 +119,7 @@ namespace UserManagement.Web.Services
             }
             catch (DuplicateUsernameException)
             {
+                // Database vẫn chặn trùng nếu tên đăng nhập bị lấy sau bước kiểm tra ban đầu.
                 throw new BadRequestException(ErrorCode.UsernameAlreadyExists, ErrorMessages.UsernameAlreadyExists);
             }
         }

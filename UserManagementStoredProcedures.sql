@@ -153,6 +153,16 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @IsActive BIT = 1;
+    DECLARE @RoleId INT;
+
+    SELECT
+        @RoleId = RoleId
+    FROM
+        dbo.Role
+    WHERE
+        RoleName = 'User';
+
     INSERT INTO
         dbo.AppUser
     (
@@ -173,8 +183,8 @@ BEGIN
         @PasswordHash,
         @PasswordSalt,
         @PasswordIterations,
-        1,
-        2
+        @IsActive,
+        @RoleId
     );
 END;
 GO

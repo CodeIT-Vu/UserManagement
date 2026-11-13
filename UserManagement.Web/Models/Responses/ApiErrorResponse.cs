@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace UserManagement.Web.Models
+namespace UserManagement.Web.Models.Responses
 {
     /// <summary>
     /// Chứa thông báo lỗi, lỗi từng trường và mã tra cứu khi cần.

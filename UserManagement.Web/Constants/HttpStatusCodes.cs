@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace UserManagement.Web.Constants
+﻿namespace UserManagement.Web.Constants
 {
-    public class HttpStatusCodes
+    /// <summary>
+    /// Khai báo mã trạng thái HTTP dùng chung cho ứng dụng.
+    /// </summary>
+    public static class HttpStatusCodes
     {
         public const int BadRequest = 400;
         public const int Unauthorized = 401;

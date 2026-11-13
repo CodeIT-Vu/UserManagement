@@ -6,7 +6,7 @@ using System.Web.Mvc;
 using System.Web.Script.Serialization;
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
-using UserManagement.Web.Models;
+using UserManagement.Web.Models.Responses;
 
 namespace UserManagement.Web.Util
 {
@@ -31,7 +31,7 @@ namespace UserManagement.Web.Util
             HttpException httpException = error as HttpException;
             RequestValidationException validationException = error as RequestValidationException;
             string traceId = Guid.NewGuid().ToString("N");
-            statusCode = 500;
+            statusCode = HttpStatusCodes.InternalServerError;
             ApiErrorResponse response = new ApiErrorResponse
             {
                 Code = ErrorCode.Unexpected,
@@ -44,15 +44,15 @@ namespace UserManagement.Web.Util
                 response.Code = apiException.ErrorCode;
                 response.Message = apiException.UserMessage;
             }
-            else if (httpException != null && httpException.GetHttpCode() == 404)
+            else if (httpException != null && httpException.GetHttpCode() == HttpStatusCodes.NotFound)
             {
-                statusCode = 404;
+                statusCode = HttpStatusCodes.NotFound;
                 response.Code = ErrorCode.PageNotFound;
                 response.Message = ErrorMessages.PageNotFound;
             }
-            else if (error is HttpAntiForgeryException || (httpException != null && httpException.GetHttpCode() == 400))
+            else if (error is HttpAntiForgeryException || (httpException != null && httpException.GetHttpCode() == HttpStatusCodes.BadRequest))
             {
-                statusCode = 400;
+                statusCode = HttpStatusCodes.BadRequest;
                 response.Code = ErrorCode.InvalidRequest;
                 response.Message = ErrorMessages.InvalidRequest;
             }
@@ -63,7 +63,7 @@ namespace UserManagement.Web.Util
             }
 
             // Chỉ trả mã tra cứu cho lỗi hệ thống; lỗi 4xx vẫn được ghi log.
-            if (statusCode >= 500)
+            if (statusCode >= HttpStatusCodes.InternalServerError)
             {
                 response.TraceId = traceId;
             }

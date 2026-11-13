@@ -1,9 +1,9 @@
 ﻿using System.Web.Mvc;
 using UserManagement.Web.Filters;
-using UserManagement.Web.DTOs;
-using UserManagement.Web.Models;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.DTOs;
+using UserManagement.Web.Models.Responses;
 
 namespace UserManagement.Web.Controllers
 {
@@ -96,7 +96,14 @@ namespace UserManagement.Web.Controllers
         [ValidateModelStateAttribute]
         public ActionResult Register(RegisterViewModel model)
         {
-            _authService.Register(model);
+            RegisterDto request = new RegisterDto
+            {
+                Username = model.Username,
+                FullName = model.FullName,
+                Email = model.Email,
+                Password = model.Password
+            };
+            _authService.Register(request);
             string loginUrl = Url.Action("Login", new { registered = true });
 
             ApiSuccessResponse response = new ApiSuccessResponse();

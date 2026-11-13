@@ -1,7 +1,7 @@
 ﻿using System.Web.Mvc;
 using System.Web.Security;
-using UserManagement.Web.DTOs;
 using System.Web;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Controllers
 {

@@ -13,7 +13,7 @@ namespace UserManagement.Web
         /// </summary>
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
-            filters.Add(DependencyResolver.Current.GetService<CurrentUserFilter>());
+            FilterProviders.Providers.Add(new CurrentUserFilterProvider());
             filters.Add(new GlobalExceptionFilter());
         }
     }

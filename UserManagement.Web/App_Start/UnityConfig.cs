@@ -1,6 +1,7 @@
 ﻿using System.Web.Mvc;
 using Unity;
 using Unity.AspNet.Mvc;
+using UserManagement.Web.Filters;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Services;
 
@@ -20,6 +21,7 @@ namespace UserManagement.Web
             container.RegisterType<IUserRepository, UserRepository>();
             container.RegisterType<IAuthService, AuthService>();
             container.RegisterType<IUserService, UserService>();
+            container.RegisterType<CurrentUserFilter>();
             DependencyResolver.SetResolver(new UnityDependencyResolver(container));
         }
     }

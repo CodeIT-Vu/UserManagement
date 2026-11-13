@@ -5,10 +5,10 @@ using System.Web.Mvc;
 using System.Web.Mvc.Filters;
 using System.Web.Security;
 using UserManagement.Web.Constants;
-using UserManagement.Web.DTOs;
-using UserManagement.Web.Models;
 using UserManagement.Web.Services;
 using UserManagement.Web.Util;
+using UserManagement.Web.Models.DTOs;
+using UserManagement.Web.Models.Responses;
 
 namespace UserManagement.Web.Filters
 {
@@ -80,7 +80,7 @@ namespace UserManagement.Web.Filters
                 return;
             }
 
-            int statusCode = isAuthenticated ? 403 : 401;
+            int statusCode = isAuthenticated ? HttpStatusCodes.Forbidden : HttpStatusCodes.Unauthorized;
             string errorCode = isAuthenticated ? ErrorCode.AccessDenied : ErrorCode.AuthenticationRequired;
             string message = isAuthenticated ? ErrorMessages.AccessDenied : ErrorMessages.AuthenticationRequired;
 

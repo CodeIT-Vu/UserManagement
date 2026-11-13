@@ -1,11 +1,12 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
-using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Tests
 {
@@ -27,9 +28,10 @@ namespace UserManagement.Tests
                 Username = "  user01  ",
                 FullName = "  Nguyen Van A  "
             };
-            UserSearchResultData page = new UserSearchResultData { TotalCount = 20 };
+            List<UserDto> users = new List<UserDto> { new UserDto { UserId = 11, Username = "user01" } };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.Search("user01", "Nguyen Van A", null, 2, 10)).Returns(page);
+            repository.Setup(repo => repo.Count("user01", "Nguyen Van A", null)).Returns(20);
+            repository.Setup(repo => repo.Search("user01", "Nguyen Van A", null, 2, 10)).Returns(users);
             UserService service = new UserService(repository.Object);
 
             UserListViewModel result = service.Search(model);
@@ -37,6 +39,10 @@ namespace UserManagement.Tests
             Assert.AreEqual(2, result.Page);
             Assert.AreEqual("user01", result.Search.Username);
             Assert.AreEqual("Nguyen Van A", result.Search.FullName);
+            Assert.AreEqual(20, result.TotalCount);
+            Assert.AreEqual(11, result.Users[0].UserId);
+            repository.Verify(repo => repo.Count("user01", "Nguyen Van A", null), Times.Once());
+            repository.Verify(repo => repo.Search("user01", "Nguyen Van A", null, 2, 10), Times.Once());
         }
 
         /// <summary>
@@ -62,17 +68,19 @@ namespace UserManagement.Tests
         {
             UserSearchViewModel model = new UserSearchViewModel { Page = 3 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            UserSearchResultData emptyPage = new UserSearchResultData { TotalCount = 20 };
-            UserSearchResultData lastPage = new UserSearchResultData { TotalCount = 20 };
-            // Trang ba vượt giới hạn; service cần đọc lại trang hai là trang cuối.
-            repository.Setup(repo => repo.Search(null, null, null, 3, 10)).Returns(emptyPage);
-            repository.Setup(repo => repo.Search(null, null, null, 2, 10)).Returns(lastPage);
+            List<UserDto> users = new List<UserDto> { new UserDto { UserId = 20 } };
+            repository.Setup(repo => repo.Count(null, null, null)).Returns(20);
+            repository.Setup(repo => repo.Search(null, null, null, 2, 10)).Returns(users);
             UserService service = new UserService(repository.Object);
 
             UserListViewModel result = service.Search(model);
 
             Assert.AreEqual(2, result.Page);
-            Assert.AreEqual(lastPage.TotalCount, result.TotalCount);
+            Assert.AreEqual(20, result.TotalCount);
+            Assert.AreEqual(20, result.Users[0].UserId);
+            repository.Verify(repo => repo.Count(null, null, null), Times.Once());
+            repository.Verify(repo => repo.Search(null, null, null, 2, 10), Times.Once());
+            repository.Verify(repo => repo.Search(null, null, null, It.IsAny<int>(), 10), Times.Once());
         }
 
         /// <summary>
@@ -82,15 +90,19 @@ namespace UserManagement.Tests
         public void Search_NoUsers_ReturnsFirstPage()
         {
             UserSearchViewModel model = new UserSearchViewModel { Page = 2 };
-            UserSearchResultData emptyPage = new UserSearchResultData();
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.Search(null, null, null, 2, 10)).Returns(emptyPage);
+            repository.Setup(repo => repo.Count(null, null, null)).Returns(0);
+            repository.Setup(repo => repo.Search(null, null, null, 1, 10)).Returns(new List<UserDto>());
             UserService service = new UserService(repository.Object);
 
             UserListViewModel result = service.Search(model);
 
             Assert.AreEqual(1, result.Page);
             Assert.AreEqual(0, result.TotalCount);
+            Assert.AreEqual(0, result.Users.Count);
+            repository.Verify(repo => repo.Count(null, null, null), Times.Once());
+            repository.Verify(repo => repo.Search(null, null, null, 1, 10), Times.Once());
+            repository.Verify(repo => repo.Search(null, null, null, It.IsAny<int>(), 10), Times.Once());
         }
 
         /// <summary>
@@ -100,7 +112,7 @@ namespace UserManagement.Tests
         public void Update_ValidData_NormalizesInput()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            UserData user = new UserData { UserId = 2, Username = "user01" };
+            UserDto user = new UserDto { UserId = 2, Username = "user01" };
             repository.Setup(repo => repo.GetById(2)).Returns(user);
             UserService service = new UserService(repository.Object);
             UserEditViewModel model = new UserEditViewModel
@@ -125,7 +137,7 @@ namespace UserManagement.Tests
         public void Update_DisableSelf_ThrowsBadRequest()
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            UserData user = new UserData { UserId = 2, Username = "user01" };
+            UserDto user = new UserDto { UserId = 2, Username = "user01" };
             repository.Setup(repo => repo.GetById(2)).Returns(user);
             UserService service = new UserService(repository.Object);
             UserEditViewModel model = new UserEditViewModel { UserId = 2, IsActive = false };
@@ -161,7 +173,7 @@ namespace UserManagement.Tests
             int userId = 99;
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetById(userId))
-                      .Returns((UserData)null);
+                      .Returns((UserDto)null);
 
             UserService service = new UserService(repository.Object);
 
@@ -176,7 +188,7 @@ namespace UserManagement.Tests
         [TestMethod]
         public void GetEdit_ExistingUser_ReturnsEditModel()
         {
-            UserData user = new UserData
+            UserDto user = new UserDto
             {
                 UserId = 2,
                 FullName = "Nguyen Van A",
@@ -218,7 +230,7 @@ namespace UserManagement.Tests
         {
             UserEditViewModel model = new UserEditViewModel { UserId = 99 };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
-            repository.Setup(repo => repo.GetById(model.UserId)).Returns((UserData)null);
+            repository.Setup(repo => repo.GetById(model.UserId)).Returns((UserDto)null);
             UserService service = new UserService(repository.Object);
 
             ApiException error = Assert.ThrowsException<ApiException>(
@@ -233,7 +245,7 @@ namespace UserManagement.Tests
         [TestMethod]
         public void Update_DisableOtherUser_Succeeds()
         {
-            UserData user = new UserData { UserId = 2, Username = "user01" };
+            UserDto user = new UserDto { UserId = 2, Username = "user01" };
             UserEditViewModel model = new UserEditViewModel { UserId = user.UserId, IsActive = false };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetById(user.UserId)).Returns(user);
@@ -251,7 +263,7 @@ namespace UserManagement.Tests
         [TestMethod]
         public void Update_SaveFailed_ThrowsNotFound()
         {
-            UserData user = new UserData { UserId = 2, Username = "user01" };
+            UserDto user = new UserDto { UserId = 2, Username = "user01" };
             UserEditViewModel model = new UserEditViewModel { UserId = user.UserId, IsActive = true };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetById(user.UserId)).Returns(user);

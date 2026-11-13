@@ -1,6 +1,6 @@
 ﻿using System.Web.Mvc;
-using UserManagement.Web.Models;
 using UserManagement.Web.Util;
+using UserManagement.Web.Models.Responses;
 
 namespace UserManagement.Web.Filters
 {

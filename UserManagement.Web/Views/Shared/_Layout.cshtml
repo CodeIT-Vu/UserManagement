@@ -1,4 +1,5 @@
-﻿@using UserManagement.Web.DTOs
+﻿@using UserManagement.Web.Constants
+@using UserManagement.Web.Models.DTOs
 @{
     CurrentUserDto currentUser = Context.Items["CurrentUser"] as CurrentUserDto;
     string loginUrl = Url.Action("Login", "Account");
@@ -17,7 +18,7 @@
         <a class="navbar-brand" href="@Url.Action("Index", "Home")">User Management</a>
         @if (currentUser != null)
         {
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole(RoleNames.Admin))
             {
                 <a class="nav-link text-light" href="@Url.Action("Index", "Users")">Quản lý người dùng</a>
             }

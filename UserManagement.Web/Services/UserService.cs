@@ -1,10 +1,10 @@
 ﻿using System;
 using UserManagement.Web.Constants;
 using UserManagement.Web.Exceptions;
-using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Util;
 using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Services
 {
@@ -37,21 +37,25 @@ namespace UserManagement.Web.Services
             model.Username = StringUtil.CleanText(model.Username);
             model.FullName = StringUtil.CleanText(model.FullName);
 
-            UserSearchResultData data = _userRepository.Search(model.Username, model.FullName, model.IsActive, model.Page, DefaultPageSize);
-            int totalPages = PaginationUtil.CalculateTotalPages(data.TotalCount, DefaultPageSize);
+            int totalCount = _userRepository.Count(model.Username, model.FullName, model.IsActive);
+            int totalPages = PaginationUtil.CalculateTotalPages(totalCount, DefaultPageSize);
 
-            // Đọc lại trang cuối nếu trang yêu cầu vượt quá số trang hiện có.
+            // Điều chỉnh trang trước khi truy vấn danh sách.
             if (totalPages > 0 && model.Page > totalPages)
             {
                 model.Page = totalPages;
-                data = _userRepository.Search(model.Username, model.FullName, model.IsActive, model.Page, DefaultPageSize);
-                totalPages = PaginationUtil.CalculateTotalPages(data.TotalCount, DefaultPageSize);
             }
 
-            if (data.TotalCount == 0)
+            if (totalCount == 0)
             {
                 model.Page = 1;
             }
+
+            UserSearchResultDto data = new UserSearchResultDto
+            {
+                TotalCount = totalCount,
+                Users = _userRepository.Search(model.Username, model.FullName, model.IsActive, model.Page, DefaultPageSize)
+            };
 
             return UserMappingUtil.ToListViewModel(data, model, model.Page, DefaultPageSize, totalPages);
         }
@@ -67,17 +71,17 @@ namespace UserManagement.Web.Services
         /// <summary>
         /// Kiểm tra ID và báo lỗi 404 nếu người dùng không tồn tại.
         /// </summary>
-        private UserData GetRequiredUser(int id)
+        private UserDto GetRequiredUser(int id)
         {
             if (id <= 0)
             {
-                throw new ApiException(404, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
+                throw new ApiException(HttpStatusCodes.NotFound, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
             }
 
-            UserData user = _userRepository.GetById(id);
+            UserDto user = _userRepository.GetById(id);
             if (user == null)
             {
-                throw new ApiException(404, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
+                throw new ApiException(HttpStatusCodes.NotFound, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
             }
 
             return user;
@@ -103,7 +107,7 @@ namespace UserManagement.Web.Services
 
             model.FullName = StringUtil.CleanText(model.FullName);
             model.Email = StringUtil.CleanText(model.Email);
-            UserData existing = GetRequiredUser(model.UserId);
+            UserDto existing = GetRequiredUser(model.UserId);
 
             bool isCurrentUser = string.Equals(existing.Username, currentUsername, StringComparison.OrdinalIgnoreCase);
             if (isCurrentUser && !model.IsActive)
@@ -114,7 +118,7 @@ namespace UserManagement.Web.Services
             bool updated = _userRepository.Update(model.UserId, model.FullName, model.Email, model.IsActive);
             if (!updated)
             {
-                throw new ApiException(404, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
+                throw new ApiException(HttpStatusCodes.NotFound, ErrorCode.UserNotFound, ErrorMessages.UserNotFound);
             }
         }
 

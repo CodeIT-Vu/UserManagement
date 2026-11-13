@@ -1,8 +1,9 @@
 ﻿using System.Web.Mvc;
 using UserManagement.Web.Filters;
-using UserManagement.Web.Models;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.Responses;
+using UserManagement.Web.Constants;
 
 namespace UserManagement.Web.Controllers
 {
@@ -24,7 +25,7 @@ namespace UserManagement.Web.Controllers
         /// <summary>
         /// Tìm kiếm người dùng và hiển thị danh sách theo trang.
         /// </summary>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         [HttpGet]
         [ValidateModelStateAttribute]
         public ActionResult Index(UserSearchViewModel model)
@@ -36,7 +37,7 @@ namespace UserManagement.Web.Controllers
         /// <summary>
         /// Lấy thông tin người dùng để hiển thị trang chi tiết.
         /// </summary>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         [HttpGet]
         [ValidateModelStateAttribute]
         public ActionResult Details(int id = 0)
@@ -48,7 +49,7 @@ namespace UserManagement.Web.Controllers
         /// <summary>
         /// Lấy dữ liệu người dùng để hiển thị form chỉnh sửa.
         /// </summary>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         [HttpGet]
         [ValidateModelStateAttribute]
         public ActionResult Edit(int id = 0)
@@ -60,7 +61,7 @@ namespace UserManagement.Web.Controllers
         /// <summary>
         /// Cập nhật người dùng và trả URL đến trang chi tiết.
         /// </summary>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = RoleNames.Admin)]
         [HttpPost]
         [ValidateAntiForgeryToken]
         [ValidateModelStateAttribute]

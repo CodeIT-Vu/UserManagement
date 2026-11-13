@@ -1,5 +1,5 @@
-﻿using UserManagement.Web.DTOs;
-using UserManagement.Web.ViewModels;
+﻿using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Services
 {
@@ -26,7 +26,7 @@ namespace UserManagement.Web.Services
         /// <summary>
         /// Kiểm tra dữ liệu và tạo tài khoản mới.
         /// </summary>
-        void Register(RegisterViewModel model);
+        void Register(RegisterDto request);
 
         /// <summary>
         /// Xác minh mật khẩu hiện tại và lưu mật khẩu mới.

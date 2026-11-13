@@ -1,7 +1,7 @@
-﻿using UserManagement.Web.DTOs;
-using UserManagement.Web.Models;
-using UserManagement.Web.ViewModels;
+﻿using UserManagement.Web.ViewModels;
 using System.Linq;
+using UserManagement.Web.Models.Entities;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Util
 {
@@ -13,7 +13,7 @@ namespace UserManagement.Web.Util
         /// <summary>
         /// Chuyển dữ liệu hồ sơ sang thông tin hiển thị chi tiết.
         /// </summary>
-        public static UserDetailsViewModel ToDetailsViewModel(UserData user)
+        public static UserDetailsViewModel ToDetailsViewModel(UserDto user)
         {
             return new UserDetailsViewModel
             {
@@ -28,7 +28,7 @@ namespace UserManagement.Web.Util
         /// <summary>
         /// Chuyển dữ liệu hồ sơ sang các trường được phép chỉnh sửa.
         /// </summary>
-        public static UserEditViewModel ToEditViewModel(UserData user)
+        public static UserEditViewModel ToEditViewModel(UserDto user)
         {
             return new UserEditViewModel
             {
@@ -42,8 +42,7 @@ namespace UserManagement.Web.Util
         /// <summary>
         /// Ghép danh sách người dùng với điều kiện tìm kiếm và thông tin phân trang.
         /// </summary>
-        public static UserListViewModel ToListViewModel(
-            UserSearchResultData result, UserSearchViewModel search, int page, int pageSize, int totalPages)
+        public static UserListViewModel ToListViewModel(UserSearchResultDto result, UserSearchViewModel search, int page, int pageSize, int totalPages)
         {
             return new UserListViewModel
             {

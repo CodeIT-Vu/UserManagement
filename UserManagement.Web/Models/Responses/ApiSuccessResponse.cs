@@ -1,4 +1,4 @@
-﻿namespace UserManagement.Web.Models
+﻿namespace UserManagement.Web.Models.Responses
 {
     /// <summary>
     /// Chứa kết quả thành công và dữ liệu trả về cho trình duyệt.

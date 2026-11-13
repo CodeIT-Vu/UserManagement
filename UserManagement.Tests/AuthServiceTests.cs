@@ -1,13 +1,14 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Security.Cryptography;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using UserManagement.Web.Constants;
-using UserManagement.Web.DTOs;
 using UserManagement.Web.Exceptions;
-using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Security;
 using UserManagement.Web.Services;
 using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.Entities;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Tests
 {
@@ -24,6 +25,45 @@ namespace UserManagement.Tests
         public void Authenticate_CorrectPassword_ReturnsUser()
         {
             AppUser user = CreateActiveUser();
+            Mock<IUserRepository> repository = new Mock<IUserRepository>();
+            repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
+            AuthService service = new AuthService(repository.Object);
+            LoginViewModel model = new LoginViewModel
+            {
+                Username = "user01",
+                Password = "Password123!"
+            };
+
+            CurrentUserDto result = service.Authenticate(model);
+
+            Assert.AreEqual(user.UserId, result.UserId);
+            Assert.AreEqual(user.Username, result.Username);
+        }
+
+        /// <summary>
+        /// Tài khoản dùng hash 600000 vòng vẫn đăng nhập được sau khi đổi cấu hình.
+        /// </summary>
+        [TestMethod]
+        public void Authenticate_LegacyIterations_ReturnsUser()
+        {
+            const int legacyIterations = 600000;
+            byte[] salt = new byte[16];
+            byte[] hash;
+            using (Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(
+                "Password123!", salt, legacyIterations, HashAlgorithmName.SHA256))
+            {
+                hash = pbkdf2.GetBytes(32);
+            }
+
+            AppUser user = new AppUser
+            {
+                UserId = 1,
+                Username = "user01",
+                IsActive = true,
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                PasswordIterations = legacyIterations
+            };
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
@@ -149,21 +189,24 @@ namespace UserManagement.Tests
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("newuser")).Returns((AppUser)null);
             AuthService service = new AuthService(repository.Object);
-            RegisterViewModel model = new RegisterViewModel
+            RegisterDto request = new RegisterDto
             {
                 Username = "  newuser  ",
                 FullName = "  Nguyen Van A  ",
                 Email = "  user@example.com  ",
-                Password = "Password123!",
-                ConfirmPassword = "Password123!"
+                Password = "Password123!"
             };
 
-            service.Register(model);
+            service.Register(request);
 
-            Assert.AreEqual("newuser", model.Username);
-            Assert.AreEqual("Nguyen Van A", model.FullName);
-            Assert.AreEqual("user@example.com", model.Email);
-            repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Once());
+            Assert.AreEqual("  newuser  ", request.Username);
+            Assert.AreEqual("  Nguyen Van A  ", request.FullName);
+            Assert.AreEqual("  user@example.com  ", request.Email);
+            repository.Verify(repo => repo.Create(It.Is<AppUser>(user =>
+                user.Username == "newuser"
+                && user.FullName == "Nguyen Van A"
+                && user.Email == "user@example.com"
+                && user.PasswordIterations == 100000)), Times.Once());
         }
 
         /// <summary>
@@ -176,7 +219,7 @@ namespace UserManagement.Tests
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             repository.Setup(repo => repo.GetByUsername("user01")).Returns(user);
             AuthService service = new AuthService(repository.Object);
-            RegisterViewModel model = new RegisterViewModel
+            RegisterDto request = new RegisterDto
             {
                 Username = "user01",
                 FullName = "Nguyen Van A",
@@ -184,7 +227,7 @@ namespace UserManagement.Tests
             };
 
             BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.Register(model));
+                () => service.Register(request));
 
             Assert.AreEqual(ErrorCode.UsernameAlreadyExists, error.ErrorCode);
             repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Never());
@@ -202,7 +245,7 @@ namespace UserManagement.Tests
             repository.Setup(repo => repo.Create(It.IsAny<AppUser>()))
                 .Throws(new DuplicateUsernameException());
             AuthService service = new AuthService(repository.Object);
-            RegisterViewModel model = new RegisterViewModel
+            RegisterDto request = new RegisterDto
             {
                 Username = "newuser",
                 FullName = "Nguyen Van A",
@@ -210,7 +253,7 @@ namespace UserManagement.Tests
             };
 
             BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.Register(model));
+                () => service.Register(request));
 
             Assert.AreEqual(400, error.HttpStatusCode);
             Assert.AreEqual(ErrorCode.UsernameAlreadyExists, error.ErrorCode);
@@ -226,7 +269,7 @@ namespace UserManagement.Tests
         {
             Mock<IUserRepository> repository = new Mock<IUserRepository>();
             AuthService service = new AuthService(repository.Object);
-            RegisterViewModel model = new RegisterViewModel
+            RegisterDto request = new RegisterDto
             {
                 Username = "",
                 FullName = "Nguyen Van A",
@@ -234,7 +277,7 @@ namespace UserManagement.Tests
             };
 
             BadRequestException error = Assert.ThrowsException<BadRequestException>(
-                () => service.Register(model));
+                () => service.Register(request));
 
             Assert.AreEqual(400, error.HttpStatusCode);
             repository.Verify(repo => repo.Create(It.IsAny<AppUser>()), Times.Never());

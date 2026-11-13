@@ -1,11 +1,11 @@
 ﻿using UserManagement.Web.Exceptions;
 using UserManagement.Web.Constants;
-using UserManagement.Web.DTOs;
-using UserManagement.Web.Models;
 using UserManagement.Web.Repositories;
 using UserManagement.Web.Security;
 using UserManagement.Web.Util;
 using UserManagement.Web.ViewModels;
+using UserManagement.Web.Models.Entities;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Services
 {
@@ -84,30 +84,30 @@ namespace UserManagement.Web.Services
         /// <summary>
         /// Kiểm tra tên đăng nhập và băm mật khẩu trước khi tạo tài khoản.
         /// </summary>
-        public void Register(RegisterViewModel model)
+        public void Register(RegisterDto request)
         {
-            if (model == null || string.IsNullOrWhiteSpace(model.Username) || string.IsNullOrWhiteSpace(model.FullName) || string.IsNullOrEmpty(model.Password))
+            if (request == null || string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.FullName) || string.IsNullOrEmpty(request.Password))
             {
                 throw new BadRequestException(ErrorCode.InvalidRequest, ErrorMessages.InvalidRequest);
             }
 
-            model.Username = StringUtil.CleanText(model.Username);
-            model.FullName = StringUtil.CleanText(model.FullName);
-            model.Email = StringUtil.CleanText(model.Email);
+            string username = StringUtil.CleanText(request.Username);
+            string fullName = StringUtil.CleanText(request.FullName);
+            string email = StringUtil.CleanText(request.Email);
 
-            AppUser existingUser = _userRepository.GetByUsername(model.Username);
+            AppUser existingUser = _userRepository.GetByUsername(username);
             if (existingUser != null)
             {
                 throw new BadRequestException(ErrorCode.UsernameAlreadyExists, ErrorMessages.UsernameAlreadyExists);
             }
 
-            PasswordHashResult passwordHash = PasswordHasher.HashPassword(model.Password);
+            PasswordHashResult passwordHash = PasswordHasher.HashPassword(request.Password);
 
             AppUser user = new AppUser
             {
-                Username = model.Username,
-                FullName = model.FullName,
-                Email = model.Email,
+                Username = username,
+                FullName = fullName,
+                Email = email,
                 PasswordHash = passwordHash.Hash,
                 PasswordSalt = passwordHash.Salt,
                 PasswordIterations = PasswordHasher.Iterations

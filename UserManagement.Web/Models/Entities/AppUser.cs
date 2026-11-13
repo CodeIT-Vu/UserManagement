@@ -1,4 +1,4 @@
-﻿namespace UserManagement.Web.Models
+﻿namespace UserManagement.Web.Models.Entities
 {
     /// <summary>
     /// Chứa dữ liệu tài khoản và mật khẩu đã băm để xác thực nội bộ.

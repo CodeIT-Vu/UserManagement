@@ -1,4 +1,4 @@
-﻿namespace UserManagement.Web.DTOs
+﻿namespace UserManagement.Web.Models.DTOs
 {
     /// <summary>
     /// Chứa thông tin người dùng hiện tại, không chứa dữ liệu mật khẩu.

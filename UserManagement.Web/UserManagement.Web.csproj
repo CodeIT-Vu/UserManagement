@@ -112,9 +112,9 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Models\AppUser.cs" />
-    <Compile Include="Models\UserData.cs" />
-    <Compile Include="Models\UserSearchResultData.cs" />
+    <Compile Include="Models\Entities\AppUser.cs" />
+    <Compile Include="Models\DTOs\UserDto.cs" />
+    <Compile Include="Models\DTOs\UserSearchResultDto.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repositories\UserRepository.cs" />
     <Compile Include="Security\PasswordHasher.cs" />
@@ -194,6 +194,7 @@
     <Compile Include="App_Start\UnityConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Filters\CurrentUserFilter.cs" />
+    <Compile Include="Filters\CurrentUserFilterProvider.cs" />
     <Compile Include="Filters\GlobalExceptionFilter.cs" />
     <Compile Include="Services\AuthService.cs" />
     <Compile Include="ViewModels\LoginViewModel.cs" />
@@ -230,17 +231,21 @@
     <Compile Include="Filters\ValidateModelStateAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DTOs\CurrentUserDto.cs" />
+    <Compile Include="Models\DTOs\CurrentUserDto.cs" />
+    <Compile Include="Models\DTOs\RegisterDto.cs" />
     <Compile Include="Constants\UserValidationLimits.cs" />
+    <Compile Include="Constants\HttpStatusCodes.cs" />
+    <Compile Include="Constants\RoleNames.cs" />
     <Compile Include="Constants\ErrorCode.cs" />
     <Compile Include="Constants\ErrorMessages.cs" />
     <Compile Include="Controllers\BaseController.cs" />
     <Compile Include="Exceptions\ApiException.cs" />
     <Compile Include="Exceptions\RequestValidationException.cs" />
-    <Compile Include="Models\ApiErrorResponse.cs" />
-    <Compile Include="Models\ApiSuccessResponse.cs" />
+    <Compile Include="Models\Responses\ApiErrorResponse.cs" />
+    <Compile Include="Models\Responses\ApiSuccessResponse.cs" />
     <Compile Include="Util\HttpRequestUtil.cs" />
     <Compile Include="Util\StringUtil.cs" />
+    <Compile Include="Util\SqlLikeUtil.cs" />
     <Compile Include="Util\UserMappingUtil.cs" />
     <Compile Include="Util\PaginationUtil.cs" />
     <Compile Include="Util\ErrorHandlingUtil.cs" />

@@ -1,4 +1,6 @@
-﻿using UserManagement.Web.Models;
+﻿using System.Collections.Generic;
+using UserManagement.Web.Models.Entities;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Repositories
 {
@@ -13,14 +15,19 @@ namespace UserManagement.Web.Repositories
         AppUser GetByUsername(string username);
 
         /// <summary>
-        /// Lấy tổng số kết quả và danh sách hồ sơ theo bộ lọc, phân trang.
+        /// Đếm người dùng phù hợp với bộ lọc tìm kiếm.
         /// </summary>
-        UserSearchResultData Search(string username, string fullName, bool? isActive, int page, int pageSize);
+        int Count(string username, string fullName, bool? isActive);
+
+        /// <summary>
+        /// Lấy danh sách hồ sơ theo bộ lọc và phân trang.
+        /// </summary>
+        List<UserDto> Search(string username, string fullName, bool? isActive, int page, int pageSize);
 
         /// <summary>
         /// Lấy hồ sơ người dùng theo ID.
         /// </summary>
-        UserData GetById(int id);
+        UserDto GetById(int id);
 
         /// <summary>
         /// Cập nhật hồ sơ và cho biết có đúng một dòng được cập nhật hay không.

@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 
-namespace UserManagement.Web.Models
+namespace UserManagement.Web.Models.DTOs
 {
     /// <summary>
     /// Chứa tổng số kết quả và danh sách người dùng của một trang.
     /// </summary>
-    public class UserSearchResultData
+    public class UserSearchResultDto
     {
         public int TotalCount { get; set; }
-        public List<UserData> Users { get; set; } = new List<UserData>();
+        public List<UserDto> Users { get; set; } = new List<UserDto>();
     }
 }

@@ -39,13 +39,40 @@ END;
 GO
 
 -- =============================================
--- Description: Search users by prefix and status, returning total count and a page of results.
+-- Description: Count users by prefix and status.
+-- Author:      Tran Hoang Vu
+-- Created:     2026/11/13
+-- =============================================
+CREATE PROCEDURE dbo.usp_AppUser_Count
+    @Username VARCHAR(100) = '',
+    @FullName NVARCHAR(300) = N'',
+    @IsActive BIT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @UsernameFilter VARCHAR(100) = ISNULL(@Username, '');
+    DECLARE @FullNameFilter NVARCHAR(300) = ISNULL(@FullName, N'');
+
+    SELECT
+        COUNT(*) AS TotalCount
+    FROM
+        dbo.AppUser
+    WHERE
+        Username LIKE @UsernameFilter + '%' ESCAPE '\'
+        AND FullName LIKE @FullNameFilter + N'%' ESCAPE '\'
+        AND (@IsActive IS NULL OR IsActive = @IsActive);
+END;
+GO
+
+-- =============================================
+-- Description: Search users by prefix and status, returning a page of results.
 -- Author:      Tran Hoang Vu
 -- Created:     2026/11/12
 -- =============================================
 CREATE PROCEDURE dbo.usp_AppUser_Search
-    @Username VARCHAR(50) = '',
-    @FullName NVARCHAR(150) = N'',
+    @Username VARCHAR(100) = '',
+    @FullName NVARCHAR(300) = N'',
     @IsActive BIT = NULL,
     @Offset BIGINT = 0,
     @PageSize INT = 10
@@ -53,17 +80,8 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @UsernameFilter VARCHAR(50) = ISNULL(@Username, '');
-    DECLARE @FullNameFilter NVARCHAR(150) = ISNULL(@FullName, N'');
-
-    SELECT
-        COUNT(*) AS TotalCount
-    FROM
-        dbo.AppUser
-    WHERE
-        Username LIKE @UsernameFilter + '%'
-        AND FullName LIKE @FullNameFilter + N'%'
-        AND (@IsActive IS NULL OR IsActive = @IsActive);
+    DECLARE @UsernameFilter VARCHAR(100) = ISNULL(@Username, '');
+    DECLARE @FullNameFilter NVARCHAR(300) = ISNULL(@FullName, N'');
 
     SELECT
         UserId,
@@ -74,8 +92,8 @@ BEGIN
     FROM
         dbo.AppUser
     WHERE
-        Username LIKE @UsernameFilter + '%'
-        AND FullName LIKE @FullNameFilter + N'%'
+        Username LIKE @UsernameFilter + '%' ESCAPE '\'
+        AND FullName LIKE @FullNameFilter + N'%' ESCAPE '\'
         AND (@IsActive IS NULL OR IsActive = @IsActive)
     ORDER BY
         UserId

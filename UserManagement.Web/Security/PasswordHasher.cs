@@ -9,7 +9,7 @@ namespace UserManagement.Web.Security
     /// </summary>
     public static class PasswordHasher
     {
-        public const int Iterations = 600000;
+        public const int Iterations = 100000;
         private const int SaltSizeInBytes = 16;
         private const int HashSizeInBytes = 32;
         private const int MinimumAcceptedIterations = 100000;

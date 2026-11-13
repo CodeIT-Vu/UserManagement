@@ -1,10 +1,12 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using Dapper;
 using UserManagement.Web.Exceptions;
-using UserManagement.Web.Models;
 using UserManagement.Web.Util;
+using UserManagement.Web.Models.Entities;
+using UserManagement.Web.Models.DTOs;
 
 namespace UserManagement.Web.Repositories
 {
@@ -36,9 +38,33 @@ namespace UserManagement.Web.Repositories
         }
 
         /// <summary>
-        /// Đọc tổng số kết quả và danh sách người dùng theo trang từ hai tập kết quả của proc.
+        /// Đếm người dùng theo bộ lọc trước khi tính trang hợp lệ.
         /// </summary>
-        public UserSearchResultData Search(string username, string fullName, bool? isActive, int page, int pageSize)
+        public int Count(string username, string fullName, bool? isActive)
+        {
+            string procedureName = "dbo.usp_AppUser_Count";
+            DynamicParameters parameters = new DynamicParameters(new
+            {
+                Username = SqlLikeUtil.EscapeWildcards(username) ?? "",
+                FullName = SqlLikeUtil.EscapeWildcards(fullName) ?? "",
+                IsActive = isActive
+            });
+
+            using (SqlConnection connection = DbConnectionFactory.CreateConnection())
+            {
+                int totalCount = connection.ExecuteScalar<int>(
+                    procedureName,
+                    parameters,
+                    commandType: CommandType.StoredProcedure);
+
+                return totalCount;
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách người dùng theo bộ lọc và trang đã được điều chỉnh.
+        /// </summary>
+        public List<UserDto> Search(string username, string fullName, bool? isActive, int page, int pageSize)
         {
             string procedureName = "dbo.usp_AppUser_Search";
 
@@ -47,8 +73,8 @@ namespace UserManagement.Web.Repositories
 
             DynamicParameters parameters = new DynamicParameters(new
             {
-                Username = username ?? "",
-                FullName = fullName ?? "",
+                Username = SqlLikeUtil.EscapeWildcards(username) ?? "",
+                FullName = SqlLikeUtil.EscapeWildcards(fullName) ?? "",
                 IsActive = isActive,
                 Offset = offset,
                 PageSize = pageSize
@@ -56,30 +82,26 @@ namespace UserManagement.Web.Repositories
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                using (SqlMapper.GridReader results = connection.QueryMultiple(
+                List<UserDto> users = connection.Query<UserDto>(
                     procedureName,
                     parameters,
-                    commandType: CommandType.StoredProcedure))
-                {
-                    UserSearchResultData result = results.ReadSingle<UserSearchResultData>();
-                    result.Users = results.Read<UserData>().ToList();
+                    commandType: CommandType.StoredProcedure).ToList();
 
-                    return result;
-                }
+                return users;
             }
         }
 
         /// <summary>
         /// Lấy hồ sơ người dùng theo ID, không lấy dữ liệu mật khẩu.
         /// </summary>
-        public UserData GetById(int id)
+        public UserDto GetById(int id)
         {
             string procedureName = "dbo.usp_AppUser_GetById";
             DynamicParameters parameters = new DynamicParameters(new { UserId = id });
 
             using (SqlConnection connection = DbConnectionFactory.CreateConnection())
             {
-                UserData user = connection.QuerySingleOrDefault<UserData>(
+                UserDto user = connection.QuerySingleOrDefault<UserDto>(
                     procedureName,
                     parameters,
                     commandType: CommandType.StoredProcedure);
